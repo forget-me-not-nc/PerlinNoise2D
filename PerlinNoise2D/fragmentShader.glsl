@@ -10,11 +10,11 @@ uniform vec3 lightPos;
 
 void main()
 {
-	vec3 ambientLight = vec3(0.7, 0.7, 0.7);
+	vec3 ambientLight = vec3(0.1, 0.1, 0.1);
 	vec3 lightNormal = normalize(lightPos - vPos);
 	vec3 diffuseColor  = vec3(1.0, 1.0, 1.0);
 
-	float diffuse = clamp(dot(lightNormal, vNormal), 0, 1);
+	float diffuse = clamp(dot(lightNormal, vNormal), 0.0, 1.0);
 
 	diffuseColor = diffuseColor * diffuse;
 

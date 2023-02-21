@@ -14,7 +14,7 @@ void Mesh::render(ShaderLoader* shader)
 	///////////draw////////////////////
 
 	glBindVertexArray(this->VAO);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, this->verticies.size());
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, this->verticies.size());
 }
 
 //////////////////////////////////

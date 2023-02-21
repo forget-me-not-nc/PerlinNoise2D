@@ -6,11 +6,12 @@
 //////////////////////////////////
 
 bool windowShouldClose = false;
+bool noiseShouldChange = false;
 
 const LONG CONTROLLER_WIDTH = 250;
 const LONG CONTROLLER_HEIGHT = 600;
 
-const TCHAR COMBO_BOX_OPTIONS[][3] = {
+const TCHAR GRID_AND_MULT_BOX_OPTIONS[][3] = {
 	TEXT("1"),
 	TEXT("2"),
 	TEXT("4"),
@@ -30,6 +31,25 @@ const TCHAR INTERPOLATION_TYPE_OPTIONS[][10] = {
 	TEXT("Cosine")
 };
 
+const TCHAR MULTIPLIER_OPTIONS[][3] = {
+	TEXT("1"),
+	TEXT("2"),
+	TEXT("4"),
+	TEXT("8"),
+	TEXT("16")
+};
+
+const TCHAR WORLD_SIZE_OPTIONS[][8] = {
+	TEXT("32x32"),
+	TEXT("64x64"),
+	TEXT("128x128"),
+};
+
+const TCHAR NOISE_TYPE_OPTIONS[][7] = {
+	TEXT("Random"),
+	TEXT("Perlin")
+};
+
 ///////////////////////////////////
 //
 //
@@ -37,7 +57,11 @@ const TCHAR INTERPOLATION_TYPE_OPTIONS[][10] = {
 
 int gridXSize = 16;
 int gridYSize = 16;
+WORLD_SIZE worldSize = WORLD_SIZE::S_32x32;
+int multiplier = 2;
+unsigned int seed = 0;
 GLenum displayType = GL_FILL;
+NOISE_TYPE noiseType = NOISE_TYPE::RANDOM;
 
 ///////////////////////////////////
 //
@@ -49,8 +73,10 @@ Program::Program(
 	bool resizable,
 	GLFWimage images[]
 
-) : camera(glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 1.0f, 0.0f))
+) : camera(glm::vec3(0.0f, 0.5f, 1.5f), glm::vec3(0.0f, 1.0f, 0.0f))
 {
+	this->initNoise();
+
 	this->initGLFW();
 	this->initWindow(title, resizable, images);
 	this->initGLEW();
@@ -73,6 +99,7 @@ Program::~Program()
 
 	delete this->core;
 	delete this->terrain;
+	delete this->noise;
 }
 
 //////////////////////////////////
@@ -104,6 +131,15 @@ void Program::update()
 void Program::render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	///////////update noise if needed////////////////////
+
+	if (noiseShouldChange)
+	{
+		initNoise();
+		initMashes();
+		initLights();
+	}
 
 	///////////draw////////////////////
 
@@ -174,6 +210,7 @@ void Program::initWindow(
 	glfwGetFramebufferSize(window, &frameBuffWidth, &frameBuffHeight);
 	glfwSetWindowSizeLimits(window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT, WINDOW_MAX_WIDTH, WINDOW_MAX_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, frameBufferResize);
+	glfwSetWindowSize(window, WINDOW_MAX_WIDTH, WINDOW_MAX_HEIGHT);
 }
 
 //////////////////////////////////
@@ -206,7 +243,7 @@ void Program::initGLEW()
 
 void Program::customInit()
 {
-	glClearColor(0.145f, 0.164f, 0.203f, 0.0f);
+	glClearColor(0.062f, 0.070f, 0.078f, 0.0f);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -245,7 +282,9 @@ void Program::initMatricies()
 
 void Program::initMashes()
 {
-	vector<Vertex> v = vector<Vertex>(sample, sample + vCount);
+	vector<Vertex> v = this->noise->getVertecies();
+
+	if (terrain) delete terrain;
 
 	this->terrain = new Mesh(v);
 }
@@ -261,7 +300,11 @@ void Program::initShaders()
 
 void Program::initLights()
 {
-	this->lightPos = glm::vec3(0.0f, 1.0f, 1.0f);
+	this->lightPos = glm::vec3(
+		static_cast<int>(worldSize) / 2.0f, 
+		static_cast<int>(worldSize) / 3.5f,
+		static_cast<int>(worldSize) / 2.0f
+	);
 }
 
 //////////////////////////////////
@@ -294,7 +337,7 @@ void Program::updateUniforms()
 	this->core->setMat4(this->projMat, "projMat");
 	this->core->setMat4(this->viewMat, "viewMat");
 	this->core->setVec3(this->camera.getCameraPosition(), "cameraPos");
-
+	this->core->setVec3(this->lightPos, "lightPos");
 }
 
 //////////////////////////////////
@@ -344,6 +387,23 @@ void Program::keyboardInput()
 	{
 		this->terrain->scale(glm::vec3(-0.05f, -0.05f, -0.05f));
 	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		this->terrain->move(glm::vec3(0.0f, 0.0f, 0.2f));
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		this->terrain->move(glm::vec3(0.2f, 0.0f, 0.0f));
+	}
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		this->terrain->move(glm::vec3(0.0f, 0.0f, -0.2f));
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		this->terrain->move(glm::vec3(-0.2f, 0.0f, 0.0f));
+	}
+
 }
 
 //////////////////////////////////
@@ -426,6 +486,31 @@ void Program::createDialogWindow()
 
 //////////////////////////////////
 
+void Program::initNoise()
+{
+	if (noise) delete noise;
+
+	switch (noiseType)
+	{
+		case NOISE_TYPE::PERLIN:
+		{
+
+			break;
+		}
+
+		default:
+		{
+			this->noise = new RandomNoise(seed, multiplier, worldSize);
+
+			break;
+		}
+	}
+
+	noiseShouldChange = false;
+}
+
+//////////////////////////////////
+
 void createControlls(HWND hWnd, HINSTANCE instance)
 {
 	RECT rect = { 0 };
@@ -475,12 +560,12 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
-	HWND typeComboBox = CreateWindow(
+	HWND interpolationComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
 		((rect.right) / 2) - 50,
-		rect.top + 120,
+		rect.top + 90,
 		80,
 		80,
 		hWnd,
@@ -489,7 +574,7 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
-	HWND interpolationComboBox = CreateWindow(
+	HWND typeComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
@@ -503,14 +588,56 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
+	HWND multiplierComboBox = CreateWindow(
+		WC_COMBOBOX,
+		NULL,
+		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
+		((rect.right) / 2) - 50,
+		rect.top + 180,
+		80,
+		140,
+		hWnd,
+		(HMENU)MULTIPLIER_SELECTOR,
+		instance,
+		NULL
+	);
+
+	HWND noiseTypeComboBox = CreateWindow(
+		WC_COMBOBOX,
+		NULL,
+		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
+		((rect.right) / 2) - 50,
+		rect.top + 210,
+		80,
+		80,
+		hWnd,
+		(HMENU)NOISE_TYPE_SELECTOR,
+		instance,
+		NULL
+	);
+
+	HWND worldSizeComboBox = CreateWindow(
+		WC_COMBOBOX,
+		NULL,
+		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
+		((rect.right) / 2) - 50,
+		rect.top + 240,
+		80,
+		100,
+		hWnd,
+		(HMENU)WORLD_SIZE_SELECTOR,
+		instance,
+		NULL
+	);
+
 	TCHAR A[255];
 	memset(&A, 0, sizeof(A));
 
-	int count = sizeof(COMBO_BOX_OPTIONS) / sizeof(COMBO_BOX_OPTIONS[0]);
+	int count = sizeof(GRID_AND_MULT_BOX_OPTIONS) / sizeof(GRID_AND_MULT_BOX_OPTIONS[0]);
 
 	for (int i = 0; i < count; i++)
 	{
-		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)COMBO_BOX_OPTIONS[i]);
+		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)GRID_AND_MULT_BOX_OPTIONS[i]);
 
 		SendMessage(gridXComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
 		SendMessage(gridYComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
@@ -534,10 +661,40 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		SendMessage(interpolationComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
 	}
 
+	count = sizeof(MULTIPLIER_OPTIONS) / sizeof(MULTIPLIER_OPTIONS[0]);
+
+	for (int i = 0; i < count; i++)
+	{
+		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)MULTIPLIER_OPTIONS[i]);
+
+		SendMessage(multiplierComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
+	}
+
+	count = sizeof(WORLD_SIZE_OPTIONS) / sizeof(WORLD_SIZE_OPTIONS[0]);
+
+	for (int i = 0; i < count; i++)
+	{
+		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)WORLD_SIZE_OPTIONS[i]);
+
+		SendMessage(worldSizeComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
+	}
+
+	count = sizeof(NOISE_TYPE_OPTIONS) / sizeof(NOISE_TYPE_OPTIONS[0]);
+
+	for (int i = 0; i < count; i++)
+	{
+		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)NOISE_TYPE_OPTIONS[i]);
+
+		SendMessage(noiseTypeComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
+	}
+
 	SendMessage(gridXComboBox, CB_SETCURSEL, 4, 0);
 	SendMessage(gridYComboBox, CB_SETCURSEL, 4, 0);
 	SendMessage(typeComboBox, CB_SETCURSEL, 0, 0);
 	SendMessage(interpolationComboBox, CB_SETCURSEL, 0, 0);
+	SendMessage(multiplierComboBox, CB_SETCURSEL, 0, 0);
+	SendMessage(noiseTypeComboBox , CB_SETCURSEL, 0, 0);
+	SendMessage(worldSizeComboBox, CB_SETCURSEL, 0, 0);
 }
 
 //////////////////////////////////
@@ -548,85 +705,125 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 	switch (message)
 	{
-	case WM_CREATE:
-	{
-		createControlls(hWnd, instance);
-
-		break;
-	}
-
-	case WM_ERASEBKGND:
-	{
-		SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)CreateSolidBrush(RGB(234, 234, 234)));
-
-		break;
-	}
-
-	case WM_COMMAND:
-	{
-		switch (LOWORD(wParam))
+		case WM_CREATE:
 		{
-		case DISPLAY_BUTTON:
-		{
-			//update noise
+			createControlls(hWnd, instance);
 
 			break;
 		}
 
-		case GRID_X_BOX:
+		case WM_ERASEBKGND:
 		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+			SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)CreateSolidBrush(RGB(234, 234, 234)));
 
-				gridXSize = _wtoi(COMBO_BOX_OPTIONS[selectedItem]);
+			break;
+		}
+
+		case WM_COMMAND:
+		{
+			switch (LOWORD(wParam))
+			{
+				case DISPLAY_BUTTON:
+				{
+					noiseShouldChange = true;
+
+					break;
+				}
+
+				case GRID_X_BOX:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						gridXSize = _wtoi(GRID_AND_MULT_BOX_OPTIONS[selectedItem]);
+					}
+
+					break;
+				}
+
+				case GRID_Y_BOX:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						gridYSize = _wtoi(GRID_AND_MULT_BOX_OPTIONS[selectedItem]);
+					}
+
+					break;
+				}
+
+				case DISPLAY_TYPE_BOX:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						if (selectedItem == 0) displayType = GL_FILL;
+						if (selectedItem == 1) displayType = GL_POINT;
+						if (selectedItem == 2) displayType = GL_LINE;
+					}
+
+					break;
+				}
+
+				case WORLD_SIZE_SELECTOR:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						if (selectedItem == 0) worldSize = WORLD_SIZE::S_32x32;
+						if (selectedItem == 1) worldSize = WORLD_SIZE::S_64x64;
+						if (selectedItem == 2) worldSize = WORLD_SIZE::S_128x128;
+					}
+			
+					break;
+				}
+
+				case MULTIPLIER_SELECTOR:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						multiplier = _wtoi(MULTIPLIER_OPTIONS[selectedItem]);
+					}
+
+					break;
+				}
+
+				case NOISE_TYPE_SELECTOR:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						if (selectedItem == 0) noiseType = NOISE_TYPE::RANDOM;
+						if (selectedItem == 1) noiseType = NOISE_TYPE::PERLIN;
+					}
+
+					break;
+				}
+
+
+				default: break;
 			}
 
 			break;
 		}
 
-		case GRID_Y_BOX:
+		case WM_DESTROY:
 		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+			DestroyWindow(hWnd);
 
-				gridYSize = _wtoi(COMBO_BOX_OPTIONS[selectedItem]);
-			}
-
-			break;
-		}
-
-		case DISPLAY_TYPE_BOX:
-		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-
-				if (selectedItem == 0) displayType = GL_FILL;
-				if (selectedItem == 1) displayType = GL_POINT;
-				if (selectedItem == 2) displayType = GL_LINE;
-			}
+			windowShouldClose = true;
 
 			break;
 		}
 
 		default: break;
-		}
-
-		break;
-	}
-
-	case WM_DESTROY:
-	{
-		DestroyWindow(hWnd);
-
-		windowShouldClose = true;
-
-		break;
-	}
-
-	default: break;
 	}
 
 	return DefWindowProcW(hWnd, message, wParam, lParam);

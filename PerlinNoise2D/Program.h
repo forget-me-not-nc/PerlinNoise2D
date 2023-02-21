@@ -17,6 +17,9 @@
 #define GRID_Y_BOX 1002
 #define DISPLAY_TYPE_BOX 1003
 #define INTERPOLATION_TYPE_BOX 1004
+#define WORLD_SIZE_SELECTOR 1005
+#define NOISE_TYPE_SELECTOR 1006
+#define MULTIPLIER_SELECTOR 1007
 
 ///////////////////////////////////
 //
@@ -25,32 +28,6 @@
 
 void frameBufferResize(GLFWwindow* window, int bWidth, int bHeight);
 void createControlls(HWND hWnd, HINSTANCE instance);
-
-///////////////////////////////////
-//
-//
-//////////////////////////////////
-
-const Vertex sample[] =
-{
-	glm::vec3(0.0f, 0.5f, 0.0f),	glm::vec3(1.0f, 0.0f, 0.0f),	glm::vec3(0.0f, 0.0f, 1.0f),
-	glm::vec3(0.5f, -0.5f, 0.5f),	glm::vec3(0.0f, 0.0f, 1.0f),	glm::vec3(0.0f, 0.0f, 1.0f),
-	glm::vec3(-0.5f, -0.5f, 0.5f),	glm::vec3(0.0f, 1.0f, 0.0f),	glm::vec3(0.0f, 0.0f, 1.0f),
-
-	glm::vec3(0.0f, 0.5f, 0.0f),	glm::vec3(1.0f, 0.0f, 0.0f),	glm::vec3(-1.0f, 0.0f, 0.0f),
-	glm::vec3(-0.5f, -0.5f, -0.5f),	glm::vec3(0.0f, 0.0f, 1.0f),	glm::vec3(-1.0f, 0.0f, 0.0f),
-	glm::vec3(-0.5f, -0.5f, 0.5f),	glm::vec3(0.0f, 1.0f, 0.0f),	glm::vec3(-1.0f, 0.0f, 0.0f),
-
-	glm::vec3(0.0f, 0.5f, 0.0f),	glm::vec3(1.0f, 0.0f, 0.0f),	glm::vec3(0.0f, 0.0f, -1.0f),
-	glm::vec3(0.5f, -0.5f, -0.5f),	glm::vec3(0.0f, 1.0f, 0.0f),	glm::vec3(0.0f, 0.0f, -1.0f),
-	glm::vec3(-0.5f, -0.5f, -0.5f),	glm::vec3(0.0f, 0.0f, 1.0f),	glm::vec3(0.0f, 0.0f, -1.0f),
-
-	glm::vec3(0.0f, 0.5f, 0.0f),	glm::vec3(1.0f, 0.0f, 0.0f),	glm::vec3(1.0f, 0.0f, 0.0f),
-	glm::vec3(0.5f, -0.5f, 0.5f),	glm::vec3(0.0f, 0.0f, 1.0f),	glm::vec3(1.0f, 0.0f, 0.0f),
-	glm::vec3(0.5f, -0.5f, -0.5f),	glm::vec3(0.0f, 1.0f, 0.0f),	glm::vec3(1.0f, 0.0f, 0.0f)
-};
-
-const int vCount = sizeof(sample) / sizeof(Vertex);
 
 ///////////////////////////////////
 //
@@ -102,6 +79,8 @@ private:
 
 	GLFWwindow* window;
 
+	Noise* noise;
+
 	glm::mat4 viewMat;
 	glm::mat4 projMat;
 
@@ -152,9 +131,15 @@ private:
 
 	void createDialogWindow();
 
+	void initNoise();
+
 	static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	//////////////////////////////////
 
 };
 
+///////////////////////////////////
+//
+//
+//////////////////////////////////

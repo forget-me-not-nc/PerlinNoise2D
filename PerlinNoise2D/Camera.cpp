@@ -16,7 +16,7 @@ Camera::Camera(glm::vec3 cameraPos, glm::vec3 worldUp)
 {
 	this->viewMat = glm::mat4(1.0f);
 
-	this->speed = 1.25f;
+	this->speed = 5.0f;
 	this->sensitivity = 7.0f;
 
 	this->pos = cameraPos;
@@ -79,35 +79,35 @@ void Camera::move(const float& dt, const DIRECTIONS dir)
 {
 	switch (dir)
 	{
-	case DIRECTIONS::FORWARD:
-	{
-		this->pos += this->front * this->speed * dt;
+		case DIRECTIONS::FORWARD:
+		{
+			this->pos += this->front * this->speed * dt;
 
-		break;
-	}
+			break;
+		}
 
-	case DIRECTIONS::BACKWARD:
-	{
-		this->pos -= this->front * this->speed * dt;
+		case DIRECTIONS::BACKWARD:
+		{
+			this->pos -= this->front * this->speed * dt;
 
-		break;
-	}
+			break;
+		}
 
-	case DIRECTIONS::LEFT:
-	{
-		this->pos -= this->right * this->speed * dt;
+		case DIRECTIONS::LEFT:
+		{
+			this->pos -= this->right * this->speed * dt;
 
-		break;
-	}
+			break;
+		}
 
-	case DIRECTIONS::RIGHT:
-	{
-		this->pos += this->right * this->speed * dt;
+		case DIRECTIONS::RIGHT:
+		{
+			this->pos += this->right * this->speed * dt;
 
-		break;
-	}
+			break;
+		}
 
-	default: break;
+		default: break;
 	}
 }
 
