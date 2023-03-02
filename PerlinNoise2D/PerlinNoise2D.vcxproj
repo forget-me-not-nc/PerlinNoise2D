@@ -150,9 +150,11 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)\LinkingLibs\GLEW\include;$(SolutionDir)\LinkingLibs\GLFW\include;$(SolutionDir)\LinkingLibs\glm\include;$(SolutionDir)\LinkingLibs\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\LinkingLibs\GLEW\include;$(SolutionDir)\LinkingLibs\GLFW\include;$(SolutionDir)\LinkingLibs\glm\include;$(SolutionDir)\LinkingLibs\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <ClCompile Include="MathFunctions.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Noise.cpp" />
     <ClCompile Include="PerlinNoise.cpp" />
+    <ClCompile Include="PerlinNoiseOctaves.cpp" />
     <ClCompile Include="Program.cpp" />
     <ClCompile Include="RandomNoise.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
@@ -160,9 +162,11 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Includes.h" />
+    <ClInclude Include="MathFunctions.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Noise.h" />
     <ClInclude Include="PerlinNoise.h" />
+    <ClInclude Include="PerlinNoiseOctaves.h" />
     <ClInclude Include="Program.h" />
     <ClInclude Include="RandomNoise.h" />
     <ClInclude Include="Settings.h" />

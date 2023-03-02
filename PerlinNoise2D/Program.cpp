@@ -13,15 +13,6 @@ bool animate = true;
 const LONG CONTROLLER_WIDTH = 250;
 const LONG CONTROLLER_HEIGHT = 600;
 
-const TCHAR GRID_AND_MULT_BOX_OPTIONS[][3] = {
-	TEXT("1"),
-	TEXT("2"),
-	TEXT("4"),
-	TEXT("8"),
-	TEXT("16"),
-	TEXT("32")
-};
-
 const TCHAR DISPLAY_TYPE_OPTIONS[][6] = {
 	TEXT("Fill"),
 	TEXT("Dots"),
@@ -30,7 +21,13 @@ const TCHAR DISPLAY_TYPE_OPTIONS[][6] = {
 
 const TCHAR INTERPOLATION_TYPE_OPTIONS[][10] = {
 	TEXT("None"),
+	TEXT("Linear"),
 	TEXT("Cosine")
+};
+
+const TCHAR POLYGON_TYPE_OPTIONS[][11] = {
+	TEXT("TRIANGLES"),
+	TEXT("QUADS")
 };
 
 const TCHAR MULTIPLIER_OPTIONS[][4] = {
@@ -38,9 +35,7 @@ const TCHAR MULTIPLIER_OPTIONS[][4] = {
 	TEXT("8"),
 	TEXT("16"),
 	TEXT("32"),
-	TEXT("48"),
 	TEXT("64"),
-	TEXT("96")
 };
 
 const TCHAR WORLD_SIZE_OPTIONS[][8] = {
@@ -61,8 +56,10 @@ const TCHAR NOISE_TYPE_OPTIONS[][7] = {
 
 WORLD_SIZE worldSize = WORLD_SIZE::S_16x16;
 NOISE_TYPE noiseType = NOISE_TYPE::RANDOM;
+INTERPOLATION_TYPES interpolationType = INTERPOLATION_TYPES::LINEAR;
 
 GLenum displayType = GL_FILL;
+GLenum polygonType = GL_TRIANGLES;
 
 int multiplier = 1;
 unsigned int seed = 0;
@@ -165,10 +162,10 @@ void Program::render()
 		glLineWidth(2.0f);
 	}
 
-	if (animate)
-	{
-		initMashes();
-	}
+	//if (animate)
+	//{
+		//initMashes();
+	//}
 
 	this->updateUniforms();
 
@@ -299,11 +296,12 @@ void Program::initMatricies()
 
 void Program::initMashes()
 {
-	vector<Vertex> v = this->noise->getVertices();
+	vector<Vertex> v = this->noise->getVertices(polygonType);
 
 	if (terrain) delete terrain;
 
 	this->terrain = new Mesh(v);
+	this->terrain->setPolygonType(polygonType);
 }
 
 //////////////////////////////////
@@ -507,7 +505,7 @@ void Program::initNoise()
 	{
 		case NOISE_TYPE::PERLIN:
 		{
-			this->noise = new PerlinNoise(seed, multiplier, worldSize, harshness);
+			this->noise = new PerlinNoise(seed, multiplier, worldSize, harshness, interpolationType);
 
 			break;
 		}
@@ -592,6 +590,20 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
+	HWND polygonComboBox = CreateWindow(
+		WC_COMBOBOX,
+		NULL,
+		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
+		((rect.right) / 2) - 35,
+		rect.top + 120,
+		80,
+		60,
+		hWnd,
+		(HMENU)POLYGON_TYPE_BOX,
+		instance,
+		NULL
+	);
+
 	///////////noise controlls////////////////////
 
 	HWND noiseTypeComboBox = CreateWindow(
@@ -599,7 +611,7 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
 		((rect.right) / 2) - 35,
-		rect.top + 150,
+		rect.top + 180,
 		80,
 		80,
 		hWnd,
@@ -613,11 +625,11 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
 		((rect.right) / 2) - 35,
-		rect.top + 180,
+		rect.top + 210,
 		80,
 		80,
 		hWnd,
-		(HMENU)DISPLAY_TYPE_BOX,
+		(HMENU)INTERPOLATION_TYPE_BOX,
 		instance,
 		NULL
 	);
@@ -634,6 +646,15 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)DISPLAY_TYPE_OPTIONS[i]);
 
 		SendMessage(typeComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
+	}
+
+	count = sizeof(POLYGON_TYPE_OPTIONS) / sizeof(POLYGON_TYPE_OPTIONS[0]);
+
+	for (int i = 0; i < count; i++)
+	{
+		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)POLYGON_TYPE_OPTIONS[i]);
+
+		SendMessage(polygonComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
 	}
 
 	count = sizeof(INTERPOLATION_TYPE_OPTIONS) / sizeof(INTERPOLATION_TYPE_OPTIONS[0]);
@@ -673,7 +694,8 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 	}
 
 	SendMessage(typeComboBox, CB_SETCURSEL, 0, 0);
-	SendMessage(interpolationComboBox, CB_SETCURSEL, 0, 0);
+	SendMessage(polygonComboBox, CB_SETCURSEL, 0, 0);
+	SendMessage(interpolationComboBox, CB_SETCURSEL, 1, 0);
 	SendMessage(multiplierComboBox, CB_SETCURSEL, 0, 0);
 	SendMessage(noiseTypeComboBox , CB_SETCURSEL, 0, 0);
 	SendMessage(worldSizeComboBox, CB_SETCURSEL, 0, 0);
@@ -685,7 +707,7 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL,
 		WS_BORDER | WS_CHILD | WS_VISIBLE,
 		((rect.right) / 2) - 35,
-		rect.top + 210,
+		rect.top + 240,
 		80,
 		20,
 		hWnd,
@@ -694,12 +716,12 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
-	HWND seedinput = CreateWindow(
+	HWND seedInput = CreateWindow(
 		WC_EDIT,
 		NULL,
 		WS_BORDER | WS_CHILD | WS_VISIBLE,
 		((rect.right) / 2) - 35,
-		rect.top + 240,
+		rect.top + 270,
 		80,
 		20,
 		hWnd,
@@ -756,6 +778,19 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					break;
 				}
 
+				case POLYGON_TYPE_BOX:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						if (selectedItem == 0) polygonType = GL_TRIANGLES;
+						if (selectedItem == 1) polygonType = GL_QUADS;
+					}
+
+					break;
+				}
+
 				case WORLD_SIZE_SELECTOR:
 				{
 					if (HIWORD(wParam) == CBN_SELCHANGE)
@@ -767,6 +802,20 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 						if (selectedItem == 2) worldSize = WORLD_SIZE::S_64x64;
 					}
 			
+					break;
+				}
+
+				case INTERPOLATION_TYPE_BOX:
+				{
+					if (HIWORD(wParam) == CBN_SELCHANGE)
+					{
+						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+
+						if (selectedItem == 0) interpolationType = INTERPOLATION_TYPES::NONE;
+						if (selectedItem == 1) interpolationType = INTERPOLATION_TYPES::LINEAR;
+						if (selectedItem == 2) interpolationType = INTERPOLATION_TYPES::COSINE;
+					}
+
 					break;
 				}
 

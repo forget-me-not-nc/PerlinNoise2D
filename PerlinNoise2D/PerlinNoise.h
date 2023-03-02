@@ -1,5 +1,9 @@
 #pragma once
+
+#define _USE_MATH_DEFINES
+
 #include "Noise.h"
+#include "MathFunctions.h"
 
 ///////////////////////////////////
 //
@@ -17,7 +21,7 @@ public:
 
 	//////////////////////////////////
 	
-	PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float harshness);
+	PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float harshness, INTERPOLATION_TYPES interpolationType);
 	~PerlinNoise();
 
 	///////////////////////////////////
@@ -31,13 +35,23 @@ private:
 
 	vector<int> permV;
 
+	INTERPOLATION_TYPES interpolationType;
+
 	//////////////////////////////////
 
-	virtual vector<Vertex> getVertices();
+	virtual vector<Vertex> getVertices(GLenum polygonType);
 	virtual void initVertices();
-	double noise(double x, double y, double z);
-	double fade(double t);
-	double lerp(double t, double a, double b);
 	double grad(int hash, double x, double y, double z);
+
+	///////////////////////////////////
+	//
+	//
+	//////////////////////////////////
+
+protected:
+	
+	//////////////////////////////////
+
+	double noise(double x, double y, double z);
 };
 

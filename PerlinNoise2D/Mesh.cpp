@@ -14,7 +14,7 @@ void Mesh::render(ShaderLoader* shader)
 	///////////draw////////////////////
 
 	glBindVertexArray(this->VAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, this->verticies.size());
+	glDrawArrays(this->polygonType, 0, this->verticies.size());
 }
 
 //////////////////////////////////
@@ -64,6 +64,13 @@ void Mesh::move(glm::vec3 pos)
 void Mesh::rotate(glm::vec3 rotation)
 {
 	this->_rotation += rotation;
+}
+
+//////////////////////////////////
+
+void Mesh::setPolygonType(GLenum type)
+{
+	this->polygonType = type;
 }
 
 //////////////////////////////////

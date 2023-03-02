@@ -29,6 +29,8 @@ public:
 	void move(glm::vec3 pos);
 	void rotate(glm::vec3 rotation);
 
+	void setPolygonType(GLenum type);
+
 	Mesh(vector<Vertex>& data);
 	~Mesh();
 
@@ -51,6 +53,8 @@ private:
 	glm::vec3 _position;
 
 	glm::mat4 modelMat;
+
+	GLenum polygonType;
 
 	//////////////////////////////////
 

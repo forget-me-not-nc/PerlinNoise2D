@@ -44,9 +44,11 @@ public:
 
 	//////////////////////////////////
 	
-	virtual vector<Vertex> getVertices();
+	virtual vector<Vertex> getVertices(GLenum polygonType);
 	virtual void initVertices() = 0;
 	virtual glm::vec3 getLightPos();
+
+	void setAnimation(bool animation);
 
 	///////////////////////////////////
 	//
@@ -73,11 +75,19 @@ protected:
 	float step;
 	float harshness;
 
+	bool animated;
+
 	std::default_random_engine engine;
 
-	///////////////////////////////////
+private: 
 
-	void calculateNormals(vector<Vertex>& vertices);
+	///////////////////////////////////
+	//
+	//
+	//////////////////////////////////
+
+	std::vector<Vertex> triangulateMesh();
+	std::vector<Vertex> arrangeMeshAsQuads();
 };
 
 ///////////////////////////////////

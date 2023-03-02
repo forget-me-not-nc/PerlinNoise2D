@@ -13,6 +13,7 @@
 //////////////////////////////////
 
 #define DISPLAY_BUTTON 1000
+#define POLYGON_TYPE_BOX 1002
 #define DISPLAY_TYPE_BOX 1003
 #define INTERPOLATION_TYPE_BOX 1004
 #define WORLD_SIZE_SELECTOR 1005

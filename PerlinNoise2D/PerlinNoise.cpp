@@ -5,7 +5,7 @@
 //
 //////////////////////////////////
 
-PerlinNoise::PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float harshness) 
+PerlinNoise::PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float harshness, INTERPOLATION_TYPES interpolationType) 
 	: Noise(seed, mult, size, harshness)
 {
 	permV.reserve(256 * 2);
@@ -18,35 +18,39 @@ PerlinNoise::PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float har
 
 	permV.insert(permV.end(), permV.begin(), permV.end());
 
+	this->interpolationType = interpolationType;
+
 	this->initVertices();
 }
 
 //////////////////////////////////
 
-vector<Vertex> PerlinNoise::getVertices()
+vector<Vertex> PerlinNoise::getVertices(GLenum polygonType)
 {
-	float time = (float)(glfwGetTime() / 50.0f);
+	//float time = (float)(glfwGetTime() / 150.0f);
 
-	float currX = 0.0f;
-	float currZ = 0.0f;
+	//float currX = 0.0f;
+	//float currZ = 0.0f;
 
-	for (int i = 0; i < this->size; i++)
-	{
-		currZ = 0.0f;
+	//for (int i = 0; i < this->size; i++)
+	//{
+	//	currZ = 0.0f;
 
-		//todo fomod(harshiness)
+	//	for (int j = 0; j < this->size; j++)
+	//	{
+	//		this->data[i * this->size + j] = glm::vec3(
+	//			currX,
+	//			this->noise(currX * time, currZ * time, 0.99f),
+	//			currZ
+	//		);
 
-		for (int j = 0; j < this->size; j++)
-		{
-			this->data[i * this->size + j] = glm::vec3(currX, this->noise(currX * time, currZ * time, 0.99 * time), currZ);
+	//		currZ += this->step;
+	//	}
 
-			currZ += this->step;
-		}
+	//	currX += this->step;
+	//}
 
-		currX += this->step;
-	}
-
-	return Noise::getVertices();
+	return Noise::getVertices(polygonType);
 }
 
 //////////////////////////////////
@@ -62,7 +66,11 @@ void PerlinNoise::initVertices()
 
 		for (int j = 0; j < this->size; j++)
 		{
-			this->data[i * this->size + j] = glm::vec3(currX, this->noise(currX, currZ, 0.99), currZ);
+			this->data[i * this->size + j] = glm::vec3(
+				currX,
+				this->noise(currX * this->harshness, currZ * this->harshness, 0.99 * this->harshness),
+				currZ
+			);
 
 			currZ += this->step;
 		}
@@ -94,51 +102,66 @@ double PerlinNoise::noise(double x, double y, double z)
 	int BA = permV[B] + Z;
 	int BB = permV[B + 1] + Z;
 
-	double res = lerp(
-		-w, 
-		lerp(
-			v,
-			lerp(
-				u,
-				grad(permV[AA], x, y, z),
-				grad(permV[BA], x - 1, y, z)
-			),
-			lerp(
-				u, 
-				grad(permV[AB], x, y - 1, z), 
-				grad(permV[BB], x - 1, y - 1, z)
-			)
-		),
-		lerp(
-			v, 
-			lerp(
-				u,
-				grad(permV[AA + 1], x, y, z - 1),
-				grad(permV[BA + 1], x - 1, y, z - 1)
-			),
-			lerp(
-				u,
-				grad(permV[AB + 1], x, y - 1, z - 1),
-				grad(permV[BB + 1], x - 1, y - 1, z - 1)
-			)
-		)
-	);
-	
-	return (res * this->harshness);
-}
+	double gAA = grad(permV[AA], x, y, z);
+	double gBA = grad(permV[BA], x - 1, y, z);
+	double gAB = grad(permV[AB], x, y - 1, z);
+	double gBB = grad(permV[BB], x - 1, y - 1, z);
+	double gAA1 = grad(permV[AA + 1], x, y, z - 1);
+	double gBA1 = grad(permV[BA + 1], x - 1, y, z - 1);
+	double gAB1 = grad(permV[AB + 1], x, y - 1, z - 1);
+	double gBB1 = grad(permV[BB + 1], x - 1, y - 1, z - 1);
 
-//////////////////////////////////
+	switch (interpolationType)
+	{
+		case INTERPOLATION_TYPES::LINEAR:
+		{
+			double l0 = lerp(
+				v,
+				lerp(u, gAA, gBA),
+				lerp(u, gAB, gBB)
+			);
 
-double PerlinNoise::fade(double t)
-{
-	return t * t * t * (t * (t * 6 - 15) + 10);
-}
+			double l1 = lerp(
+				v,
+				lerp(u, gAA1, gBA1),
+				lerp(u, gAB1, gBB1)
+			);
 
-//////////////////////////////////
+			double l2 = lerp(w, l0, l1);
 
-double PerlinNoise::lerp(double t, double a, double b)
-{
-	return a + t * (b - a);
+			return l2;
+
+			break;
+		}
+
+		case INTERPOLATION_TYPES::COSINE:
+		{
+			double l0 = cosine(
+				cosine(gAA, gBA, u),
+				cosine(gAB, gBB, u),
+				v
+			);
+
+			double l1 = cosine(
+				cosine(gAA1, gBA1, u),
+				cosine(gAB1, gBB1, u),
+				v
+			);
+
+			double l2 = cosine(l0, l1, w);
+
+			return l2;
+
+			break;
+		}
+
+		default:
+		{
+			return (u + v + w);
+
+			break;
+		}
+	}
 }
 
 //////////////////////////////////
@@ -158,3 +181,7 @@ double PerlinNoise::grad(int hash, double x, double y, double z)
 PerlinNoise::~PerlinNoise()
 {
 }
+
+//////////////////////////////////
+
+
