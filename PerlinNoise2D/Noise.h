@@ -13,9 +13,9 @@
 
 enum class WORLD_SIZE
 {
+	S_16x16 = 16,
 	S_32x32 = 32,
 	S_64x64 = 64,
-	S_128x128 = 128
 };
 
 enum class NOISE_TYPE
@@ -44,7 +44,9 @@ public:
 
 	//////////////////////////////////
 	
-	virtual vector<Vertex> getVertecies();
+	virtual vector<Vertex> getVertices();
+	virtual void initVertices() = 0;
+	virtual glm::vec3 getLightPos();
 
 	///////////////////////////////////
 	//
@@ -55,21 +57,27 @@ protected:
 
 	//////////////////////////////////
 
-	Noise(unsigned int seed, int multiplier, WORLD_SIZE size);
+	Noise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness);
 
 	//////////////////////////////////
 
-	glm::vec3* terrain;
+	glm::vec3* data;
 	glm::vec3 vertexColor;
+	glm::vec3 lightPos;
 
 	///////////////////////////////////
 
 	int multiplier;
 	int size;
+	int trueSize;
+	float step;
+	float harshness;
+
+	std::default_random_engine engine;
 
 	///////////////////////////////////
 
-	float getRandomFloat(float max);
+	void calculateNormals(vector<Vertex>& vertices);
 };
 
 ///////////////////////////////////

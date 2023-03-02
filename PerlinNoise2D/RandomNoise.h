@@ -18,7 +18,7 @@ class RandomNoise : public Noise
 
 		//////////////////////////////////
 
-		RandomNoise(unsigned int seed, int multiplier, WORLD_SIZE size);
+		RandomNoise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness);
 		~RandomNoise();
 
 	///////////////////////////////////
@@ -30,9 +30,9 @@ class RandomNoise : public Noise
 
 		//////////////////////////////////
 
-		void initVerticies();
+		virtual void initVertices();
+
+		float getRandomFloat(float min, float max);
 
 		//////////////////////////////////
-
-		const float NOISE_MAX = 4.0f;
 };

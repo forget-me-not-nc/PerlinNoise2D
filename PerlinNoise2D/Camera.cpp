@@ -16,7 +16,7 @@ Camera::Camera(glm::vec3 cameraPos, glm::vec3 worldUp)
 {
 	this->viewMat = glm::mat4(1.0f);
 
-	this->speed = 5.0f;
+	this->speed = 10.0f;
 	this->sensitivity = 7.0f;
 
 	this->pos = cameraPos;

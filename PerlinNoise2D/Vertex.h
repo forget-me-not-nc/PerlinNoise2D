@@ -16,9 +16,26 @@
 
 struct Vertex
 {
+	///////////////////////////////////
+	//
+	//
+	//////////////////////////////////
+
 	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec3 normal;
+
+	///////////////////////////////////
+	//
+	//
+	//////////////////////////////////
+
+	Vertex() 
+	{
+		this->pos = glm::vec3(0.0f);
+		this->color = glm::vec3(0.0f);
+		this->normal = glm::vec3(0.0f);
+	}
 
 	Vertex(glm::vec3 pos, glm::vec3 color, glm::vec3 normal)
 	{

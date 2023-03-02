@@ -7,10 +7,11 @@ in vec3 vNormal;
 out vec4 fColor;
 
 uniform vec3 lightPos;
+uniform vec3 cameraPos;
 
 void main()
 {
-	vec3 ambientLight = vec3(0.1, 0.1, 0.1);
+	vec3 ambientLight = vec3(0.05, 0.05, 0.05);
 	vec3 lightNormal = normalize(lightPos - vPos);
 	vec3 diffuseColor  = vec3(1.0, 1.0, 1.0);
 
@@ -18,5 +19,12 @@ void main()
 
 	diffuseColor = diffuseColor * diffuse;
 
+	//vec3 lightNormal1 = normalize(lightPos - vPos);
+	//vec3 reflectDir = normalize(reflect(lightNormal1, normalize(vNormal)));
+	//vec3 posToViewDir = normalize(vPos - cameraPos);
+	//float specConst = pow(max(dot(posToViewDir, reflectDir), 0), 30);
+	//vec3 spec = vec3(1.0, 1.0, 1.0) * specConst;
+
+	//fColor = vec4(vColor, 1.0) * (vec4(ambientLight, 1.0) + vec4(diffuseColor, 1.0) + vec4(spec, 1.0));
 	fColor = vec4(vColor, 1.0) * (vec4(ambientLight, 1.0) + vec4(diffuseColor, 1.0));
 }

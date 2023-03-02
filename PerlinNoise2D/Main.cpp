@@ -1,5 +1,7 @@
 #include "Program.h"
 
+#pragma execution_character_set( "utf-8" )
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -10,6 +12,8 @@
 
 int main()
 {
+	SetConsoleOutputCP(65001);
+
 	///////////load icon////////////////////
 
 	GLFWimage images[1];

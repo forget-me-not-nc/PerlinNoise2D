@@ -5,10 +5,10 @@
 //
 //////////////////////////////////
 
-RandomNoise::RandomNoise(unsigned int seed, int multiplier, WORLD_SIZE size) 
-	: Noise(seed, multiplier, size)
+RandomNoise::RandomNoise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness) 
+	: Noise(seed, multiplier, size, harshness)
 {
-	this->initVerticies();
+	this->initVertices();
 }
 
 //////////////////////////////////
@@ -19,10 +19,8 @@ RandomNoise::~RandomNoise()
 
 //////////////////////////////////
 
-void RandomNoise::initVerticies()
+void RandomNoise::initVertices()
 {
-	float step = 1.0f / (float)this->multiplier;
-
 	float currX = 0.0f;
 	float currZ = 0.0f;
 
@@ -32,11 +30,20 @@ void RandomNoise::initVerticies()
 
 		for (int j = 0; j < this->size; j++)
 		{
-			this->terrain[i * this->size + j] = glm::vec3(currX, this->getRandomFloat(this->NOISE_MAX), currZ);
+			this->data[i * this->size + j] = glm::vec3(currX, this->getRandomFloat(0.0f, this->harshness), currZ);
 
-			currZ += step;
+			currZ += this->step;
 		}
 
-		currX += step;
+		currX += this->step;
 	}
+}
+
+//////////////////////////////////
+
+float RandomNoise::getRandomFloat(float min, float max)
+{
+	std::uniform_real_distribution<float> distribution(0.0f, this->harshness);
+
+	return distribution(this->engine);
 }

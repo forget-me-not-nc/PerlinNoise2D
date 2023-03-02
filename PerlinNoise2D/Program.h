@@ -13,13 +13,13 @@
 //////////////////////////////////
 
 #define DISPLAY_BUTTON 1000
-#define GRID_X_BOX 1001
-#define GRID_Y_BOX 1002
 #define DISPLAY_TYPE_BOX 1003
 #define INTERPOLATION_TYPE_BOX 1004
 #define WORLD_SIZE_SELECTOR 1005
 #define NOISE_TYPE_SELECTOR 1006
 #define MULTIPLIER_SELECTOR 1007
+#define NOISE_FREQ_INPUT 1008
+#define SEED_INPUT 1009
 
 ///////////////////////////////////
 //

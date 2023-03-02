@@ -8,6 +8,8 @@
 bool windowShouldClose = false;
 bool noiseShouldChange = false;
 
+bool animate = true;
+
 const LONG CONTROLLER_WIDTH = 250;
 const LONG CONTROLLER_HEIGHT = 600;
 
@@ -31,18 +33,20 @@ const TCHAR INTERPOLATION_TYPE_OPTIONS[][10] = {
 	TEXT("Cosine")
 };
 
-const TCHAR MULTIPLIER_OPTIONS[][3] = {
+const TCHAR MULTIPLIER_OPTIONS[][4] = {
 	TEXT("1"),
-	TEXT("2"),
-	TEXT("4"),
 	TEXT("8"),
-	TEXT("16")
+	TEXT("16"),
+	TEXT("32"),
+	TEXT("48"),
+	TEXT("64"),
+	TEXT("96")
 };
 
 const TCHAR WORLD_SIZE_OPTIONS[][8] = {
+	TEXT("16x16"),
 	TEXT("32x32"),
 	TEXT("64x64"),
-	TEXT("128x128"),
 };
 
 const TCHAR NOISE_TYPE_OPTIONS[][7] = {
@@ -55,13 +59,18 @@ const TCHAR NOISE_TYPE_OPTIONS[][7] = {
 //
 //////////////////////////////////
 
-int gridXSize = 16;
-int gridYSize = 16;
-WORLD_SIZE worldSize = WORLD_SIZE::S_32x32;
-int multiplier = 2;
-unsigned int seed = 0;
-GLenum displayType = GL_FILL;
+WORLD_SIZE worldSize = WORLD_SIZE::S_16x16;
 NOISE_TYPE noiseType = NOISE_TYPE::RANDOM;
+
+GLenum displayType = GL_FILL;
+
+int multiplier = 1;
+unsigned int seed = 0;
+
+float harshness = 1;
+
+char freqInputBuff[32];
+char seedInputBuff[64];
 
 ///////////////////////////////////
 //
@@ -156,6 +165,11 @@ void Program::render()
 		glLineWidth(2.0f);
 	}
 
+	if (animate)
+	{
+		initMashes();
+	}
+
 	this->updateUniforms();
 
 	this->terrain->render(this->core);
@@ -246,6 +260,9 @@ void Program::customInit()
 	glClearColor(0.062f, 0.070f, 0.078f, 0.0f);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_NORMALIZE);
+	glShadeModel(GL_SMOOTH);
+	glCullFace(GL_CCW);
 
 	this->fov = 90.0f;
 	this->nearPlane = 0.1f;
@@ -282,7 +299,7 @@ void Program::initMatricies()
 
 void Program::initMashes()
 {
-	vector<Vertex> v = this->noise->getVertecies();
+	vector<Vertex> v = this->noise->getVertices();
 
 	if (terrain) delete terrain;
 
@@ -300,11 +317,7 @@ void Program::initShaders()
 
 void Program::initLights()
 {
-	this->lightPos = glm::vec3(
-		static_cast<int>(worldSize) / 2.0f, 
-		static_cast<int>(worldSize) / 3.5f,
-		static_cast<int>(worldSize) / 2.0f
-	);
+	this->lightPos = this->noise->getLightPos();
 }
 
 //////////////////////////////////
@@ -494,13 +507,14 @@ void Program::initNoise()
 	{
 		case NOISE_TYPE::PERLIN:
 		{
+			this->noise = new PerlinNoise(seed, multiplier, worldSize, harshness);
 
 			break;
 		}
 
 		default:
 		{
-			this->noise = new RandomNoise(seed, multiplier, worldSize);
+			this->noise = new RandomNoise(seed, multiplier, worldSize, harshness);
 
 			break;
 		}
@@ -518,6 +532,8 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 	rect.bottom = CONTROLLER_HEIGHT;
 	rect.right = CONTROLLER_WIDTH;
 
+	///////////button////////////////////
+
 	HWND displayButton = CreateWindow(
 		L"BUTTON",
 		L"Display",
@@ -532,39 +548,41 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
-	HWND gridXComboBox = CreateWindow(
+	///////////world controlls////////////////////
+
+	HWND worldSizeComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
+		((rect.right) / 2) - 35,
 		rect.top + 30,
 		80,
-		130,
+		120,
 		hWnd,
-		(HMENU)GRID_X_BOX,
+		(HMENU)WORLD_SIZE_SELECTOR,
 		instance,
 		NULL
 	);
 
-	HWND gridYComboBox = CreateWindow(
+	HWND multiplierComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
+		((rect.right) / 2) - 35,
 		rect.top + 60,
 		80,
-		130,
+		170,
 		hWnd,
-		(HMENU)GRID_Y_BOX,
+		(HMENU)MULTIPLIER_SELECTOR,
 		instance,
 		NULL
 	);
 
-	HWND interpolationComboBox = CreateWindow(
+	HWND typeComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
+		((rect.right) / 2) - 35,
 		rect.top + 90,
 		80,
 		80,
@@ -574,40 +592,14 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
-	HWND typeComboBox = CreateWindow(
-		WC_COMBOBOX,
-		NULL,
-		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
-		rect.top + 150,
-		80,
-		80,
-		hWnd,
-		(HMENU)DISPLAY_TYPE_BOX,
-		instance,
-		NULL
-	);
-
-	HWND multiplierComboBox = CreateWindow(
-		WC_COMBOBOX,
-		NULL,
-		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
-		rect.top + 180,
-		80,
-		140,
-		hWnd,
-		(HMENU)MULTIPLIER_SELECTOR,
-		instance,
-		NULL
-	);
+	///////////noise controlls////////////////////
 
 	HWND noiseTypeComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
-		rect.top + 210,
+		((rect.right) / 2) - 35,
+		rect.top + 150,
 		80,
 		80,
 		hWnd,
@@ -616,34 +608,26 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		NULL
 	);
 
-	HWND worldSizeComboBox = CreateWindow(
+	HWND interpolationComboBox = CreateWindow(
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 50,
-		rect.top + 240,
+		((rect.right) / 2) - 35,
+		rect.top + 180,
 		80,
-		100,
+		80,
 		hWnd,
-		(HMENU)WORLD_SIZE_SELECTOR,
+		(HMENU)DISPLAY_TYPE_BOX,
 		instance,
 		NULL
 	);
 
+	///////////init controlls////////////////////
+
 	TCHAR A[255];
 	memset(&A, 0, sizeof(A));
 
-	int count = sizeof(GRID_AND_MULT_BOX_OPTIONS) / sizeof(GRID_AND_MULT_BOX_OPTIONS[0]);
-
-	for (int i = 0; i < count; i++)
-	{
-		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)GRID_AND_MULT_BOX_OPTIONS[i]);
-
-		SendMessage(gridXComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
-		SendMessage(gridYComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
-	}
-
-	count = sizeof(DISPLAY_TYPE_OPTIONS) / sizeof(DISPLAY_TYPE_OPTIONS[0]);
+	int count = sizeof(DISPLAY_TYPE_OPTIONS) / sizeof(DISPLAY_TYPE_OPTIONS[0]);
 
 	for (int i = 0; i < count; i++)
 	{
@@ -688,13 +672,41 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		SendMessage(noiseTypeComboBox, (UINT)CB_ADDSTRING, 0, (LPARAM)A);
 	}
 
-	SendMessage(gridXComboBox, CB_SETCURSEL, 4, 0);
-	SendMessage(gridYComboBox, CB_SETCURSEL, 4, 0);
 	SendMessage(typeComboBox, CB_SETCURSEL, 0, 0);
 	SendMessage(interpolationComboBox, CB_SETCURSEL, 0, 0);
 	SendMessage(multiplierComboBox, CB_SETCURSEL, 0, 0);
 	SendMessage(noiseTypeComboBox , CB_SETCURSEL, 0, 0);
 	SendMessage(worldSizeComboBox, CB_SETCURSEL, 0, 0);
+
+	///////////inputs////////////////////
+
+	HWND noiseFreqInput = CreateWindow(
+		WC_EDIT,
+		NULL,
+		WS_BORDER | WS_CHILD | WS_VISIBLE,
+		((rect.right) / 2) - 35,
+		rect.top + 210,
+		80,
+		20,
+		hWnd,
+		(HMENU)NOISE_FREQ_INPUT,
+		instance,
+		NULL
+	);
+
+	HWND seedinput = CreateWindow(
+		WC_EDIT,
+		NULL,
+		WS_BORDER | WS_CHILD | WS_VISIBLE,
+		((rect.right) / 2) - 35,
+		rect.top + 240,
+		80,
+		20,
+		hWnd,
+		(HMENU)SEED_INPUT,
+		instance,
+		NULL
+	);
 }
 
 //////////////////////////////////
@@ -730,30 +742,6 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					break;
 				}
 
-				case GRID_X_BOX:
-				{
-					if (HIWORD(wParam) == CBN_SELCHANGE)
-					{
-						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-
-						gridXSize = _wtoi(GRID_AND_MULT_BOX_OPTIONS[selectedItem]);
-					}
-
-					break;
-				}
-
-				case GRID_Y_BOX:
-				{
-					if (HIWORD(wParam) == CBN_SELCHANGE)
-					{
-						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-
-						gridYSize = _wtoi(GRID_AND_MULT_BOX_OPTIONS[selectedItem]);
-					}
-
-					break;
-				}
-
 				case DISPLAY_TYPE_BOX:
 				{
 					if (HIWORD(wParam) == CBN_SELCHANGE)
@@ -774,9 +762,9 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					{
 						int selectedItem = SendMessage((HWND)lParam, CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
 
-						if (selectedItem == 0) worldSize = WORLD_SIZE::S_32x32;
-						if (selectedItem == 1) worldSize = WORLD_SIZE::S_64x64;
-						if (selectedItem == 2) worldSize = WORLD_SIZE::S_128x128;
+						if (selectedItem == 0) worldSize = WORLD_SIZE::S_16x16;
+						if (selectedItem == 1) worldSize = WORLD_SIZE::S_32x32;
+						if (selectedItem == 2) worldSize = WORLD_SIZE::S_64x64;
 					}
 			
 					break;
@@ -802,6 +790,42 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 						if (selectedItem == 0) noiseType = NOISE_TYPE::RANDOM;
 						if (selectedItem == 1) noiseType = NOISE_TYPE::PERLIN;
+					}
+
+					break;
+				}
+
+				case NOISE_FREQ_INPUT:
+				{
+					if (HIWORD(wParam) == EN_CHANGE)
+					{
+						memset(freqInputBuff, 0, sizeof(freqInputBuff));
+
+						GetWindowTextA((HWND)lParam, freqInputBuff, sizeof(freqInputBuff));
+
+						try
+						{
+							harshness = (float)atof(freqInputBuff);
+						}
+						catch (const std::exception&) {}
+					}
+
+					break;
+				}
+
+				case SEED_INPUT:
+				{
+					if (HIWORD(wParam) == EN_CHANGE)
+					{
+						memset(seedInputBuff, 0, sizeof(seedInputBuff));
+
+						GetWindowTextA((HWND)lParam, seedInputBuff, sizeof(seedInputBuff));
+
+						try
+						{
+							seed = atoi(seedInputBuff);
+						}
+						catch (const std::exception&) {}
 					}
 
 					break;

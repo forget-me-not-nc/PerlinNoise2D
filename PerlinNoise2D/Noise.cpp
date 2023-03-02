@@ -5,28 +5,37 @@
 //
 //////////////////////////////////
 
-Noise::Noise(unsigned int seed, int multiplier, WORLD_SIZE size)
+Noise::Noise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness)
 {
 	this->vertexColor = glm::vec3(0.113f, 0.647f, 0.172f);
 
+	this->engine = std::default_random_engine(seed);
+
 	srand(seed);
 
-	this->size = (int)size * multiplier;
+	this->trueSize = (int)size;
+	this->size = ((int)size * multiplier) / ((int)size / 16);
 	this->multiplier = multiplier;
-
-	this->terrain = new glm::vec3[this->size * this->size];
+	this->step = (1.0f / (float)(this->multiplier)) * ((this->trueSize / 16.0f));
+	this->lightPos = glm::vec3(
+		static_cast<int>(trueSize) / 2.0f,
+		static_cast<int>(trueSize) / 3.5f,
+		static_cast<int>(trueSize) / 2.0f
+	);
+	this->harshness = harshness;
+	this->data = new glm::vec3[this->size * this->size];
 }
 
 ///////////////////////////////////
 
 Noise::~Noise()
 {
-	delete[] terrain;
+	delete[] data;
 }
 
 //////////////////////////////////
 
-vector<Vertex> Noise::getVertecies()
+vector<Vertex> Noise::getVertices()
 {
 	vector<Vertex> v;
 	v.reserve(this->size * this->size);
@@ -57,8 +66,8 @@ vector<Vertex> Noise::getVertecies()
 		int indexCurr = i * this->size + j;
 		int indexNext = (i + 1) * this->size + j;
 
-		currV = terrain[indexCurr];
-		nextV = terrain[indexNext];
+		currV = data[indexCurr];
+		nextV = data[indexNext];
 
 		v.push_back(
 			Vertex(currV, this->vertexColor, glm::vec3(0.0f, 1.0f, 0.0f))
@@ -108,14 +117,41 @@ vector<Vertex> Noise::getVertecies()
 		}
 	}
 
+	if(this->multiplier > 8) calculateNormals(v);
+
 	return v;
 }
 
 //////////////////////////////////
 
-float Noise::getRandomFloat(float max)
+glm::vec3 Noise::getLightPos()
 {
-	return (float(rand()) / float((RAND_MAX)) * max);
+	this->lightPos.y += this->harshness / 3.5f;
+
+	return this->lightPos;
 }
 
 //////////////////////////////////
+
+void Noise::calculateNormals(vector<Vertex>& vertices)
+{
+	for (unsigned int i = 2; i < vertices.size(); i += 3)
+	{
+		glm::vec3 v1 = vertices[i - 2].pos;
+		glm::vec3 v2 = vertices[i - 1].pos;
+		glm::vec3 v3 = vertices[i].pos;
+
+		glm::vec3 polyNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
+
+		if (glm::dot(polyNormal, glm::normalize(lightPos - v1)) < 0.0f) {
+			polyNormal *= -1.0f;
+		}
+
+		vertices[i].normal = polyNormal;
+		vertices[i - 1].normal = polyNormal;
+		vertices[i - 2].normal = polyNormal;
+	}
+}
+
+//////////////////////////////////
+
