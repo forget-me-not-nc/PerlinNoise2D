@@ -50,6 +50,7 @@ public:
 
 	void updateInput(const float& dt, const DIRECTIONS dir, const double& offsetX, const double& offsetY);
 	void move(const float& dt, const DIRECTIONS dir);
+	void setCameraPosition(glm::vec3 pos);
 
 	const glm::mat4 getVievMatrix();
 	const glm::vec3 getCameraPosition();

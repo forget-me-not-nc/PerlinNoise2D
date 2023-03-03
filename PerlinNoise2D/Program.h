@@ -13,14 +13,19 @@
 //////////////////////////////////
 
 #define DISPLAY_BUTTON 1000
+#define STATIC_LABEL 1001
 #define POLYGON_TYPE_BOX 1002
 #define DISPLAY_TYPE_BOX 1003
 #define INTERPOLATION_TYPE_BOX 1004
 #define WORLD_SIZE_SELECTOR 1005
 #define NOISE_TYPE_SELECTOR 1006
 #define MULTIPLIER_SELECTOR 1007
-#define NOISE_FREQ_INPUT 1008
+#define NOISE_HARSH_INPUT 1008
 #define SEED_INPUT 1009
+#define OCTAVES_INPUT 1010
+#define AMPLITUDE_INPUT 1011
+#define PERSISTENCE_INPUT 1012
+#define LACUNARITY_INPUT 1013
 
 ///////////////////////////////////
 //
@@ -133,11 +138,11 @@ private:
 	void createDialogWindow();
 
 	void initNoise();
+	void setupCameraPos();
 
 	static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	//////////////////////////////////
-
 };
 
 ///////////////////////////////////

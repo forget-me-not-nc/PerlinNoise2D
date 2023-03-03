@@ -20,7 +20,7 @@ int main()
 
 	images[0].pixels = stbi_load("icon.png", &images[0].width, &images[0].height, 0, 4);
 
-	Program program("Perlin Noise 2D", true, images);
+	Program program("Perlin Noise 2D", false, images);
 
 	stbi_image_free(images[0].pixels);
 

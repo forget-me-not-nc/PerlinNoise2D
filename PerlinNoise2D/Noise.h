@@ -21,7 +21,8 @@ enum class WORLD_SIZE
 enum class NOISE_TYPE
 {
 	RANDOM,
-	PERLIN
+	PERLIN,
+	PERLIN_OCTAVES
 };
 
 ///////////////////////////////////

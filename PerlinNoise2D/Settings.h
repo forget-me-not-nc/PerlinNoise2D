@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RandomNoise.h"
-#include "PerlinNoise.h"
+#include "PerlinNoiseOctaves.h"
 
 ///////////////////////////////////
 //
@@ -10,13 +10,24 @@
 
 extern int multiplier;
 extern unsigned int seed;
+extern int octaves;
+
 extern WORLD_SIZE worldSize;
-extern GLenum displayType; 
-extern GLenum polygonType;
 extern INTERPOLATION_TYPES interpolationType;
 extern NOISE_TYPE noiseType;
+
+extern GLenum displayType;
+extern GLenum polygonType;
+
 extern float minValue;
 extern float harshness;
+extern float amplitude;
+extern float persistence;
+extern float lacunarity;
+
+
+extern glm::vec3 cameraPos;
+extern glm::vec3 worldUp;
 
 ///////////////////////////////////
 //

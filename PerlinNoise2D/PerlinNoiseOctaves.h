@@ -43,11 +43,12 @@ private:
 	///////////////////////////////////
 
 	int octaves;
-	int amplitude;
-	int persistence;
-	int lacunarity;
+	float amplitude;
+	float persistence;
+	float lacunarity;
 	
 	///////////////////////////////////
 
+	double noiseFBM(double x, double y, double z);
 	virtual void initVertices();
 };

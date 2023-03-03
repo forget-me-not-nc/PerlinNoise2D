@@ -16,8 +16,8 @@ Camera::Camera(glm::vec3 cameraPos, glm::vec3 worldUp)
 {
 	this->viewMat = glm::mat4(1.0f);
 
-	this->speed = 10.0f;
-	this->sensitivity = 7.0f;
+	this->speed = 15.0f;
+	this->sensitivity = 6.0f;
 
 	this->pos = cameraPos;
 	this->worldUp = worldUp;
@@ -131,6 +131,15 @@ const glm::mat4 Camera::getVievMatrix()
 const glm::vec3 Camera::getCameraPosition()
 {
 	return this->pos;
+}
+
+///////////////////////////////////
+
+void Camera::setCameraPosition(glm::vec3 pos)
+{
+	this->pos = pos;
+
+	this->updateVectors();
 }
 
 //////////////////////////////////

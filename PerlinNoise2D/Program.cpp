@@ -5,13 +5,30 @@
 //
 //////////////////////////////////
 
+void createTextLabels(RECT rect, HWND hParent, HINSTANCE hInstance);
+void createControlls(HWND hWnd, HINSTANCE instance);
+
+///////////////////////////////////
+//
+//
+//////////////////////////////////
+
 bool windowShouldClose = false;
 bool noiseShouldChange = false;
+bool inputsAreActive = true;
+bool inputsAreCreated = false;
 
 bool animate = true;
 
-const LONG CONTROLLER_WIDTH = 250;
-const LONG CONTROLLER_HEIGHT = 600;
+const LONG CONTROLLER_WIDTH = 300;
+const LONG CONTROLLER_HEIGHT = 806;
+
+const LONG BOX_WIDTH = 100;
+const LONG BOX_Y_OFFSET = 30;
+const LONG BOX_X_OFFSET = 130;
+const LONG LABEL_X_OFFSET = 10;
+const LONG LABEL_Y_OFFSET = 31;
+const LONG LABEL_WIDTH = 120;
 
 const TCHAR DISPLAY_TYPE_OPTIONS[][6] = {
 	TEXT("Fill"),
@@ -44,9 +61,10 @@ const TCHAR WORLD_SIZE_OPTIONS[][8] = {
 	TEXT("64x64"),
 };
 
-const TCHAR NOISE_TYPE_OPTIONS[][7] = {
+const TCHAR NOISE_TYPE_OPTIONS[][14] = {
 	TEXT("Random"),
-	TEXT("Perlin")
+	TEXT("Perlin"),
+	TEXT("PerlinOctaves")
 };
 
 ///////////////////////////////////
@@ -63,11 +81,18 @@ GLenum polygonType = GL_TRIANGLES;
 
 int multiplier = 1;
 unsigned int seed = 0;
+int octaves = 8;
 
 float harshness = 1;
+float amplitude = 1.0f;
+float persistence = 0.5f;
+float lacunarity = 2.0f;
 
-char freqInputBuff[32];
-char seedInputBuff[64];
+char floatInputBuff[64];
+char intInputBuff[64];
+
+glm::vec3 cameraPos = glm::vec3(8.0f, 5.0f, 16.0f);
+glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 ///////////////////////////////////
 //
@@ -79,7 +104,7 @@ Program::Program(
 	bool resizable,
 	GLFWimage images[]
 
-) : camera(glm::vec3(0.0f, 0.5f, 1.5f), glm::vec3(0.0f, 1.0f, 0.0f))
+) : camera(cameraPos, worldUp)
 {
 	this->initNoise();
 
@@ -145,6 +170,7 @@ void Program::render()
 		initNoise();
 		initMashes();
 		initLights();
+		setupCameraPos();
 	}
 
 	///////////draw////////////////////
@@ -254,7 +280,7 @@ void Program::initGLEW()
 
 void Program::customInit()
 {
-	glClearColor(0.062f, 0.070f, 0.078f, 0.0f);
+	glClearColor(0.13333f,  0.15686f,  0.19216f, 0.0f);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_NORMALIZE);
@@ -510,6 +536,23 @@ void Program::initNoise()
 			break;
 		}
 
+		case NOISE_TYPE::PERLIN_OCTAVES:
+		{
+			this->noise = new PerlinNoiseOctaves(
+				seed, 
+				multiplier,
+				worldSize, 
+				harshness, 
+				interpolationType,
+				octaves, 
+				amplitude,
+				persistence,
+				lacunarity
+			);
+
+			break;
+		}
+
 		default:
 		{
 			this->noise = new RandomNoise(seed, multiplier, worldSize, harshness);
@@ -519,6 +562,18 @@ void Program::initNoise()
 	}
 
 	noiseShouldChange = false;
+}
+
+//////////////////////////////////
+
+void Program::setupCameraPos()
+{
+	this->camera.setCameraPosition(
+		glm::vec3(
+			(float)worldSize / 2.0f,
+			5.0f,
+			(float)worldSize)
+	);
 }
 
 //////////////////////////////////
@@ -552,9 +607,9 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 30,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 1,
+		BOX_WIDTH,
 		120,
 		hWnd,
 		(HMENU)WORLD_SIZE_SELECTOR,
@@ -566,9 +621,9 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 60,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 2,
+		BOX_WIDTH,
 		170,
 		hWnd,
 		(HMENU)MULTIPLIER_SELECTOR,
@@ -580,9 +635,9 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 90,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 3,
+		BOX_WIDTH,
 		80,
 		hWnd,
 		(HMENU)DISPLAY_TYPE_BOX,
@@ -594,9 +649,9 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 120,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 4,
+		BOX_WIDTH,
 		60,
 		hWnd,
 		(HMENU)POLYGON_TYPE_BOX,
@@ -610,9 +665,9 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 180,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 7,
+		BOX_WIDTH,
 		80,
 		hWnd,
 		(HMENU)NOISE_TYPE_SELECTOR,
@@ -624,9 +679,9 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_COMBOBOX,
 		NULL,
 		CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 210,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 8,
+		BOX_WIDTH,
 		80,
 		hWnd,
 		(HMENU)INTERPOLATION_TYPE_BOX,
@@ -702,16 +757,16 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 
 	///////////inputs////////////////////
 
-	HWND noiseFreqInput = CreateWindow(
+	HWND noiseHarshInput = CreateWindow(
 		WC_EDIT,
 		NULL,
 		WS_BORDER | WS_CHILD | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 240,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 9,
+		BOX_WIDTH,
 		20,
 		hWnd,
-		(HMENU)NOISE_FREQ_INPUT,
+		(HMENU)NOISE_HARSH_INPUT,
 		instance,
 		NULL
 	);
@@ -720,15 +775,104 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		WC_EDIT,
 		NULL,
 		WS_BORDER | WS_CHILD | WS_VISIBLE,
-		((rect.right) / 2) - 35,
-		rect.top + 270,
-		80,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 5,
+		BOX_WIDTH,
 		20,
 		hWnd,
 		(HMENU)SEED_INPUT,
 		instance,
 		NULL
 	);
+
+	HWND octavesInput = CreateWindow(
+		WC_EDIT,
+		NULL,
+		WS_BORDER | WS_CHILD | WS_VISIBLE,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 10,
+		BOX_WIDTH,
+		20,
+		hWnd,
+		(HMENU)OCTAVES_INPUT,
+		instance,
+		NULL
+	);
+
+	HWND amplitudeInput = CreateWindow(
+		WC_EDIT,
+		NULL,
+		WS_BORDER | WS_CHILD | WS_VISIBLE,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 11,
+		BOX_WIDTH,
+		20,
+		hWnd,
+		(HMENU)AMPLITUDE_INPUT,
+		instance,
+		NULL
+	);
+
+	HWND persistenceInput = CreateWindow(
+		WC_EDIT,
+		NULL,
+		WS_BORDER | WS_CHILD | WS_VISIBLE,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 12,
+		BOX_WIDTH,
+		20,
+		hWnd,
+		(HMENU)PERSISTENCE_INPUT,
+		instance,
+		NULL
+	);
+
+	HWND lacunarityInput = CreateWindow(
+		WC_EDIT,
+		NULL,
+		WS_BORDER | WS_CHILD | WS_VISIBLE,
+		rect.right - BOX_X_OFFSET,
+		rect.top + BOX_Y_OFFSET * 13,
+		BOX_WIDTH,
+		20,
+		hWnd,
+		(HMENU)LACUNARITY_INPUT,
+		instance,
+		NULL
+	);
+
+	///////////init inputs////////////////////
+
+	SetWindowTextA(noiseHarshInput, std::to_string(harshness).c_str());
+	SetWindowTextA(seedInput, std::to_string(seed).c_str());
+	SetWindowTextA(octavesInput, std::to_string(octaves).c_str());
+	SetWindowTextA(amplitudeInput, std::to_string(amplitude).c_str());
+	SetWindowTextA(persistenceInput, std::to_string(persistence).c_str());
+	SetWindowTextA(lacunarityInput, std::to_string(lacunarity).c_str());
+
+	///////////init labels////////////////////
+
+	createTextLabels(rect, hWnd, instance);
+
+	inputsAreCreated = true;
+}
+
+//////////////////////////////////
+
+void createTextLabels(RECT rect, HWND hParent, HINSTANCE hInstance)
+{
+	HWND sizeLable = CreateWindow(L"STATIC", L" World size: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 1 - 0, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND multLable = CreateWindow(L"STATIC", L" Multiplier: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 2 - 1, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND displayLable = CreateWindow(L"STATIC", L" Polygon display: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 3 - 2, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND polygonTypeLable = CreateWindow(L"STATIC", L" Polygon type: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 4 - 3, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND seedLable = CreateWindow(L"STATIC", L" Seed: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 5 - 4, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND noiseTypeLable = CreateWindow(L"STATIC", L" Noise type: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 7 - 6, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND interpolTypeLable = CreateWindow(L"STATIC", L" Interpolation type: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 8 - 7, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND harshLable = CreateWindow(L"STATIC", L" Harshiness: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 9 - 8, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND octavesLable = CreateWindow(L"STATIC", L" Octaves: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 10 - 9, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND amplitudeLable = CreateWindow(L"STATIC", L" Amplitude: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 11 - 10, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND persistenceLable = CreateWindow(L"STATIC", L" Persistence: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 12 - 11, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND lacunarityLable = CreateWindow(L"STATIC", L" Lacunarity: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 13 - 12, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 }
 
 //////////////////////////////////
@@ -748,7 +892,18 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 		case WM_ERASEBKGND:
 		{
-			SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)CreateSolidBrush(RGB(234, 234, 234)));
+			SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)CreateSolidBrush(RGB(238, 238, 238)));
+
+			break;
+		}
+
+		case WM_CTLCOLORSTATIC:
+		{
+			HDC hdcStatic = (HDC)wParam;
+			SetTextColor(hdcStatic, RGB(34, 40, 49));
+			SetBkColor(hdcStatic, RGB(238, 238, 238));
+
+			return (LRESULT)GetStockObject(NULL_BRUSH);
 
 			break;
 		}
@@ -839,22 +994,23 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 						if (selectedItem == 0) noiseType = NOISE_TYPE::RANDOM;
 						if (selectedItem == 1) noiseType = NOISE_TYPE::PERLIN;
+						if (selectedItem == 2) noiseType = NOISE_TYPE::PERLIN_OCTAVES;
 					}
 
 					break;
 				}
 
-				case NOISE_FREQ_INPUT:
+				case NOISE_HARSH_INPUT:
 				{
 					if (HIWORD(wParam) == EN_CHANGE)
 					{
-						memset(freqInputBuff, 0, sizeof(freqInputBuff));
+						memset(floatInputBuff, 0, sizeof(floatInputBuff));
 
-						GetWindowTextA((HWND)lParam, freqInputBuff, sizeof(freqInputBuff));
+						GetWindowTextA((HWND)lParam, floatInputBuff, sizeof(floatInputBuff));
 
 						try
 						{
-							harshness = (float)atof(freqInputBuff);
+							harshness = (float)atof(floatInputBuff);
 						}
 						catch (const std::exception&) {}
 					}
@@ -866,13 +1022,13 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 				{
 					if (HIWORD(wParam) == EN_CHANGE)
 					{
-						memset(seedInputBuff, 0, sizeof(seedInputBuff));
+						memset(intInputBuff, 0, sizeof(intInputBuff));
 
-						GetWindowTextA((HWND)lParam, seedInputBuff, sizeof(seedInputBuff));
+						GetWindowTextA((HWND)lParam, intInputBuff, sizeof(intInputBuff));
 
 						try
 						{
-							seed = atoi(seedInputBuff);
+							seed = atoi(intInputBuff);
 						}
 						catch (const std::exception&) {}
 					}
@@ -880,6 +1036,77 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 					break;
 				}
 
+				case OCTAVES_INPUT:
+				{
+					if (HIWORD(wParam) == EN_CHANGE)
+					{
+						memset(intInputBuff, 0, sizeof(intInputBuff));
+
+						GetWindowTextA((HWND)lParam, intInputBuff, sizeof(intInputBuff));
+
+						try
+						{
+							octaves = atoi(intInputBuff);
+						}
+						catch (const std::exception&) {}
+					}
+
+					break;
+				}
+
+				case AMPLITUDE_INPUT:
+				{
+					if (HIWORD(wParam) == EN_CHANGE)
+					{
+						memset(floatInputBuff , 0, sizeof(floatInputBuff));
+
+						GetWindowTextA((HWND)lParam, floatInputBuff, sizeof(floatInputBuff));
+
+						try
+						{
+							amplitude = atof(floatInputBuff);
+						}
+						catch (const std::exception&) {}
+					}
+
+					break;
+				}
+
+				case LACUNARITY_INPUT:
+				{
+					if (HIWORD(wParam) == EN_CHANGE)
+					{
+						memset(floatInputBuff, 0, sizeof(floatInputBuff));
+
+						GetWindowTextA((HWND)lParam, floatInputBuff, sizeof(floatInputBuff));
+
+						try
+						{
+							lacunarity = atof(floatInputBuff);
+						}
+						catch (const std::exception&) {}
+					}
+
+					break;
+				}
+
+				case PERSISTENCE_INPUT:
+				{
+					if (HIWORD(wParam) == EN_CHANGE)
+					{
+						memset(floatInputBuff, 0, sizeof(floatInputBuff));
+
+						GetWindowTextA((HWND)lParam, floatInputBuff, sizeof(floatInputBuff));
+
+						try
+						{
+							persistence = atof(floatInputBuff);
+						}
+						catch (const std::exception&) {}
+					}
+
+					break;
+				}
 
 				default: break;
 			}
@@ -897,6 +1124,25 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		}
 
 		default: break;
+	}
+
+	if (noiseType != NOISE_TYPE::PERLIN_OCTAVES && inputsAreActive && inputsAreCreated)
+	{
+		SendDlgItemMessage(hWnd, OCTAVES_INPUT, EM_SETREADONLY, TRUE, 0);
+		SendDlgItemMessage(hWnd, PERSISTENCE_INPUT, EM_SETREADONLY, TRUE, 0);
+		SendDlgItemMessage(hWnd, LACUNARITY_INPUT, EM_SETREADONLY, TRUE, 0);
+		SendDlgItemMessage(hWnd, AMPLITUDE_INPUT, EM_SETREADONLY, TRUE, 0);
+
+		inputsAreActive = false;
+	}
+	else if (noiseType == NOISE_TYPE::PERLIN_OCTAVES && !inputsAreActive && inputsAreCreated)
+	{
+		SendDlgItemMessage(hWnd, OCTAVES_INPUT, EM_SETREADONLY, FALSE, 0);
+		SendDlgItemMessage(hWnd, PERSISTENCE_INPUT, EM_SETREADONLY, FALSE, 0);
+		SendDlgItemMessage(hWnd, LACUNARITY_INPUT, EM_SETREADONLY, FALSE, 0);
+		SendDlgItemMessage(hWnd, AMPLITUDE_INPUT, EM_SETREADONLY, FALSE, 0);
+
+		inputsAreActive = true;
 	}
 
 	return DefWindowProcW(hWnd, message, wParam, lParam);

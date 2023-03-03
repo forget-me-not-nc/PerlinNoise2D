@@ -1,4 +1,5 @@
 #include "Noise.h"
+#include <queue>
 
 ///////////////////////////////////
 //
@@ -7,8 +8,7 @@
 
 Noise::Noise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness)
 {
-	this->vertexColor = glm::vec3(0.113f, 0.647f, 0.172f);
-
+	this->vertexColor = glm::vec3(0.0f, 0.67843f, 0.70980f);
 	this->engine = std::default_random_engine(seed);
 
 	srand(seed);
