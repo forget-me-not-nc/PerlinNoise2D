@@ -44,7 +44,7 @@ double PerlinNoiseOctaves::noiseFBM(double x, double y, double z)
 
 	for (int i = 0; i < this->octaves; i++)
 	{
-		value += tAmplitude * this->noise(x * tHarshness + offsetX, y * tHarshness + offsetY, z * tHarshness + offsetZ);
+		value += tAmplitude * this->noise(x * tHarshness, y * tHarshness, z * tHarshness);
 		tAmplitude *= tPersistence;
 		tHarshness *= tLacunarity;
 	}
