@@ -68,7 +68,7 @@ void PerlinNoise::initVertices()
 		{
 			this->data[i * this->size + j] = glm::vec3(
 				currX,
-				this->noise(currX * this->harshness, currZ * this->harshness, 0.99 * this->harshness),
+				(float)this->noise(currX * this->harshness, currZ * this->harshness, 0.99f * this->harshness),
 				currZ
 			);
 

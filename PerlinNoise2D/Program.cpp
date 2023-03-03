@@ -1064,7 +1064,7 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 						try
 						{
-							amplitude = atof(floatInputBuff);
+							amplitude = (float)atof(floatInputBuff);
 						}
 						catch (const std::exception&) {}
 					}
@@ -1082,7 +1082,7 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 						try
 						{
-							lacunarity = atof(floatInputBuff);
+							lacunarity = (float)atof(floatInputBuff);
 						}
 						catch (const std::exception&) {}
 					}
@@ -1100,7 +1100,7 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 						try
 						{
-							persistence = atof(floatInputBuff);
+							persistence = (float)atof(floatInputBuff);
 						}
 						catch (const std::exception&) {}
 					}
