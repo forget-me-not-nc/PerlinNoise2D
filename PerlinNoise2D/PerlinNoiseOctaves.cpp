@@ -42,19 +42,11 @@ double PerlinNoiseOctaves::noiseFBM(double x, double y, double z)
 	double tPersistence = this->persistence;
 	double tLacunarity = this->lacunarity;
 
-	double offsetX = 0.0;
-	double offsetZ = 1.0;
-	double offsetY = 2.0;
-
 	for (int i = 0; i < this->octaves; i++)
 	{
 		value += tAmplitude * this->noise(x * tHarshness + offsetX, y * tHarshness + offsetY, z * tHarshness + offsetZ);
 		tAmplitude *= tPersistence;
 		tHarshness *= tLacunarity;
-
-		offsetX += 100.0; 
-		offsetY += 200.0;
-		offsetZ += 300.0;
 	}
 
 	return value;
