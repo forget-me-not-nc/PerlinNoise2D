@@ -21,6 +21,8 @@ class RandomNoise : public Noise
 		RandomNoise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness);
 		~RandomNoise();
 
+		virtual vector<Vertex> getVertices(GLenum polygonType);
+
 	///////////////////////////////////
 	//
 	//

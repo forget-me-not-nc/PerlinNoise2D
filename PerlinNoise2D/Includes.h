@@ -15,6 +15,8 @@
 #include <random>
 #include <cmath>
 
+#include <omp.h>
+
 ///////////////////////////////////
 //
 //

@@ -64,6 +64,10 @@ protected:
 
 	//////////////////////////////////
 
+	void updateTime();
+
+	//////////////////////////////////
+
 	glm::vec3* data;
 	glm::vec3 vertexColor;
 	glm::vec3 lightPos;
@@ -79,6 +83,10 @@ protected:
 	bool animated;
 
 	std::default_random_engine engine;
+
+	float curTime;
+	float dt;
+	float prevTime;
 
 private: 
 

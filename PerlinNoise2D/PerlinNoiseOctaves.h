@@ -32,6 +32,7 @@ public:
 
 	~PerlinNoiseOctaves();
 
+	virtual vector<Vertex> getVertices(GLenum polygonType);
 
 	///////////////////////////////////
 	//

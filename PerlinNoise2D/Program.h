@@ -26,6 +26,7 @@
 #define AMPLITUDE_INPUT 1011
 #define PERSISTENCE_INPUT 1012
 #define LACUNARITY_INPUT 1013
+#define ANIMATION_CHECKBOX 1014
 
 ///////////////////////////////////
 //
@@ -139,6 +140,8 @@ private:
 
 	void initNoise();
 	void setupCameraPos();
+
+	void setupAnimationSetting();
 
 	static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

@@ -7,6 +7,7 @@
 
 void createTextLabels(RECT rect, HWND hParent, HINSTANCE hInstance);
 void createControlls(HWND hWnd, HINSTANCE instance);
+void setWindowState(HWND hWnd, INT menus[], int size, bool flag);
 
 ///////////////////////////////////
 //
@@ -18,7 +19,7 @@ bool noiseShouldChange = false;
 bool inputsAreActive = true;
 bool inputsAreCreated = false;
 
-bool animate = true;
+bool animate = false;
 
 const LONG CONTROLLER_WIDTH = 300;
 const LONG CONTROLLER_HEIGHT = 806;
@@ -65,6 +66,31 @@ const TCHAR NOISE_TYPE_OPTIONS[][14] = {
 	TEXT("Random"),
 	TEXT("Perlin"),
 	TEXT("PerlinOctaves")
+};
+
+///////////////////////////////////
+//
+//
+//////////////////////////////////
+
+INT animationDisableMenus[] = {
+	POLYGON_TYPE_BOX,
+	//INTERPOLATION_TYPE_BOX,
+	WORLD_SIZE_SELECTOR,
+	MULTIPLIER_SELECTOR,
+	//NOISE_HARSH_INPUT,
+	//SEED_INPUT,
+	OCTAVES_INPUT,
+	//AMPLITUDE_INPUT,
+	//PERSISTENCE_INPUT,
+	//LACUNARITY_INPUT
+};
+
+INT onlyPerlinOctavesMenus[] = {
+	OCTAVES_INPUT,
+	AMPLITUDE_INPUT,
+	PERSISTENCE_INPUT,
+	LACUNARITY_INPUT
 };
 
 ///////////////////////////////////
@@ -188,10 +214,10 @@ void Program::render()
 		glLineWidth(2.0f);
 	}
 
-	//if (animate)
-	//{
-		//initMashes();
-	//}
+	if (animate)
+	{
+		initMashes();
+	}
 
 	this->updateUniforms();
 
@@ -527,6 +553,8 @@ void Program::initNoise()
 {
 	if (noise) delete noise;
 
+	if (animate) this->setupAnimationSetting();
+
 	switch (noiseType)
 	{
 		case NOISE_TYPE::PERLIN:
@@ -562,6 +590,7 @@ void Program::initNoise()
 	}
 
 	noiseShouldChange = false;
+	this->noise->setAnimation(animate);
 }
 
 //////////////////////////////////
@@ -574,6 +603,17 @@ void Program::setupCameraPos()
 			5.0f,
 			(float)worldSize)
 	);
+}
+
+//////////////////////////////////
+
+void Program::setupAnimationSetting()
+{
+	worldSize = WORLD_SIZE::S_16x16;
+	interpolationType = INTERPOLATION_TYPES::LINEAR;
+	polygonType = GL_QUADS;
+	multiplier = 8;
+	octaves = 2;
 }
 
 //////////////////////////////////
@@ -597,6 +637,22 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		30,
 		hWnd,
 		(HMENU)DISPLAY_BUTTON,
+		instance,
+		NULL
+	);
+
+	///////////animation checkbox////////////////////
+
+	HWND animationCheckBox = CreateWindow(
+		L"BUTTON",
+		NULL,
+		WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
+		rect.right - BOX_X_OFFSET - 70,
+		rect.bottom - 120,
+		20,
+		20,
+		hWnd,
+		(HMENU)ANIMATION_CHECKBOX,
 		instance,
 		NULL
 	);
@@ -861,6 +917,7 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 
 void createTextLabels(RECT rect, HWND hParent, HINSTANCE hInstance)
 {
+	HWND animationCheckLable = CreateWindow(L"STATIC", L" Enable Animation ", WS_CHILD | WS_VISIBLE, rect.right - BOX_X_OFFSET - 50, rect.bottom - 119, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND sizeLable = CreateWindow(L"STATIC", L" World size: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 1 - 0, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND multLable = CreateWindow(L"STATIC", L" Multiplier: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 2 - 1, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND displayLable = CreateWindow(L"STATIC", L" Polygon display: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 3 - 2, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
@@ -873,6 +930,16 @@ void createTextLabels(RECT rect, HWND hParent, HINSTANCE hInstance)
 	HWND amplitudeLable = CreateWindow(L"STATIC", L" Amplitude: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 11 - 10, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND persistenceLable = CreateWindow(L"STATIC", L" Persistence: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 12 - 11, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND lacunarityLable = CreateWindow(L"STATIC", L" Lacunarity: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 13 - 12, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+}
+
+//////////////////////////////////
+
+void setWindowState(HWND hWnd, INT menus[], int size, bool flag)
+{
+	for (int i = 0; i < size; i++)
+	{
+		EnableWindow(GetDlgItem(hWnd, menus[i]), flag);
+	}
 }
 
 //////////////////////////////////
@@ -915,6 +982,33 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 				case DISPLAY_BUTTON:
 				{
 					noiseShouldChange = true;
+
+					break;
+				}
+
+				case ANIMATION_CHECKBOX:
+				{
+					if(HIWORD(wParam) == BN_CLICKED)
+					{
+						if (SendDlgItemMessage(hWnd, ANIMATION_CHECKBOX, BM_GETCHECK, 0, 0))
+						{
+							animate = true;
+
+							setWindowState(hWnd, animationDisableMenus, sizeof(animationDisableMenus) / sizeof(INT), false);
+
+							noiseShouldChange = true;
+						}
+						else
+						{
+							animate = false;
+
+							setWindowState(hWnd, animationDisableMenus, sizeof(animationDisableMenus) / sizeof(INT), true);
+
+							inputsAreActive = true;
+
+							polygonType = GL_TRIANGLES;
+						}
+					}
 
 					break;
 				}
@@ -1128,20 +1222,20 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 	if (noiseType != NOISE_TYPE::PERLIN_OCTAVES && inputsAreActive && inputsAreCreated)
 	{
-		SendDlgItemMessage(hWnd, OCTAVES_INPUT, EM_SETREADONLY, TRUE, 0);
-		SendDlgItemMessage(hWnd, PERSISTENCE_INPUT, EM_SETREADONLY, TRUE, 0);
-		SendDlgItemMessage(hWnd, LACUNARITY_INPUT, EM_SETREADONLY, TRUE, 0);
-		SendDlgItemMessage(hWnd, AMPLITUDE_INPUT, EM_SETREADONLY, TRUE, 0);
-
+		setWindowState(hWnd, onlyPerlinOctavesMenus, sizeof(onlyPerlinOctavesMenus) / sizeof(INT), false);
+		
 		inputsAreActive = false;
 	}
 	else if (noiseType == NOISE_TYPE::PERLIN_OCTAVES && !inputsAreActive && inputsAreCreated)
 	{
-		SendDlgItemMessage(hWnd, OCTAVES_INPUT, EM_SETREADONLY, FALSE, 0);
-		SendDlgItemMessage(hWnd, PERSISTENCE_INPUT, EM_SETREADONLY, FALSE, 0);
-		SendDlgItemMessage(hWnd, LACUNARITY_INPUT, EM_SETREADONLY, FALSE, 0);
-		SendDlgItemMessage(hWnd, AMPLITUDE_INPUT, EM_SETREADONLY, FALSE, 0);
-
+		setWindowState(hWnd, onlyPerlinOctavesMenus, sizeof(onlyPerlinOctavesMenus) / sizeof(INT), true);
+		
+		if (animate)
+		{
+			INT t[]{ OCTAVES_INPUT };
+			setWindowState(hWnd, t, 1, false);
+		}
+		
 		inputsAreActive = true;
 	}
 

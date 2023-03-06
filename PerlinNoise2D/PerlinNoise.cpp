@@ -8,8 +8,7 @@
 PerlinNoise::PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float harshness, INTERPOLATION_TYPES interpolationType) 
 	: Noise(seed, mult, size, harshness)
 {
-	permV.reserve(256 * 2);
-	permV.resize(256);
+	permV.resize(256 * 2);
 
 	int index = 0;
 
@@ -27,28 +26,31 @@ PerlinNoise::PerlinNoise(unsigned int seed, int mult, WORLD_SIZE size, float har
 
 vector<Vertex> PerlinNoise::getVertices(GLenum polygonType)
 {
-	//float time = (float)(glfwGetTime() / 150.0f);
+	if (this->animated)
+	{
+		this->updateTime();
 
-	//float currX = 0.0f;
-	//float currZ = 0.0f;
+		float currX = 0.0f;
+		float currZ = 0.0f;
 
-	//for (int i = 0; i < this->size; i++)
-	//{
-	//	currZ = 0.0f;
+		for (int i = 0; i < this->size; i++)
+		{
+			currZ = 0.0f;
 
-	//	for (int j = 0; j < this->size; j++)
-	//	{
-	//		this->data[i * this->size + j] = glm::vec3(
-	//			currX,
-	//			this->noise(currX * time, currZ * time, 0.99f),
-	//			currZ
-	//		);
+			for (int j = 0; j < this->size; j++)
+			{
+				this->data[i * this->size + j] = glm::vec3(
+					currX,
+					this->noise(currX * this->harshness + this->curTime, currZ * this->harshness + this->curTime, 0.99f * this->harshness + this->curTime),
+					currZ
+				);
 
-	//		currZ += this->step;
-	//	}
+				currZ += this->step;
+			}
 
-	//	currX += this->step;
-	//}
+			currX += this->step;
+		}
+	}
 
 	return Noise::getVertices(polygonType);
 }
@@ -83,13 +85,13 @@ void PerlinNoise::initVertices()
 
 double PerlinNoise::noise(double x, double y, double z)
 {
-	int X = (int)floor(x) & 255;
-	int Y = (int)floor(y) & 255;
-	int Z = (int)floor(z) & 255;
+	int X = (int)fastFloor(x) & 255;
+	int Y = (int)fastFloor(y) & 255;
+	int Z = (int)fastFloor(z) & 255;
 
-	x -= floor(x);
-	y -= floor(y);
-	z -= floor(z);
+	x -= fastFloor(x);
+	y -= fastFloor(y);
+	z -= fastFloor(z);
 
 	double u = fade(x);
 	double v = fade(y);

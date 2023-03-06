@@ -18,13 +18,5 @@ void main()
 	float diffuse = clamp(dot(lightNormal, vNormal), 0.0, 1.0);
 
 	diffuseColor = diffuseColor * diffuse;
-
-	//vec3 lightNormal1 = normalize(lightPos - vPos);
-	//vec3 reflectDir = normalize(reflect(lightNormal1, normalize(vNormal)));
-	//vec3 posToViewDir = normalize(vPos - cameraPos);
-	//float specConst = pow(max(dot(posToViewDir, reflectDir), 0), 30);
-	//vec3 spec = vec3(1.0, 1.0, 1.0) * specConst;
-
-	//fColor = vec4(vColor, 1.0) * (vec4(ambientLight, 1.0) + vec4(diffuseColor, 1.0) + vec4(spec, 1.0));
 	fColor = vec4(vColor, 1.0) * (vec4(ambientLight, 1.0) + vec4(diffuseColor, 1.0));
 }
