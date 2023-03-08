@@ -25,6 +25,8 @@ extern float amplitude;
 extern float persistence;
 extern float lacunarity;
 
+extern bool animate;
+extern bool paintTerrainLayers;
 
 extern glm::vec3 cameraPos;
 extern glm::vec3 worldUp;

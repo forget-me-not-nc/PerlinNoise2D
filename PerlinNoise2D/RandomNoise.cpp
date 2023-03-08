@@ -72,7 +72,7 @@ void RandomNoise::initVertices()
 
 float RandomNoise::getRandomFloat(float min, float max)
 {
-	std::uniform_real_distribution<float> distribution(0.0f, this->harshness);
+	std::uniform_real_distribution<float> distribution(min, max);
 
 	return distribution(this->engine);
 }

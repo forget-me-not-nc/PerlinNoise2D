@@ -19,8 +19,6 @@ bool noiseShouldChange = false;
 bool inputsAreActive = true;
 bool inputsAreCreated = false;
 
-bool animate = false;
-
 const LONG CONTROLLER_WIDTH = 300;
 const LONG CONTROLLER_HEIGHT = 806;
 
@@ -113,6 +111,9 @@ float harshness = 1;
 float amplitude = 1.0f;
 float persistence = 0.5f;
 float lacunarity = 2.0f;
+
+bool animate = false;
+bool paintTerrainLayers = false;
 
 char floatInputBuff[64];
 char intInputBuff[64];
@@ -591,6 +592,7 @@ void Program::initNoise()
 
 	noiseShouldChange = false;
 	this->noise->setAnimation(animate);
+	this->noise->setPaintTerrainLayers(paintTerrainLayers);
 }
 
 //////////////////////////////////
@@ -653,6 +655,20 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 		20,
 		hWnd,
 		(HMENU)ANIMATION_CHECKBOX,
+		instance,
+		NULL
+	);
+
+	HWND paintLayersCheckBox = CreateWindow(
+		L"BUTTON",
+		NULL,
+		WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
+		rect.right - BOX_X_OFFSET - 70,
+		rect.bottom - 140,
+		20,
+		20,
+		hWnd,
+		(HMENU)PAINT_LAYERS_CHECKBOX,
 		instance,
 		NULL
 	);
@@ -918,6 +934,7 @@ void createControlls(HWND hWnd, HINSTANCE instance)
 void createTextLabels(RECT rect, HWND hParent, HINSTANCE hInstance)
 {
 	HWND animationCheckLable = CreateWindow(L"STATIC", L" Enable Animation ", WS_CHILD | WS_VISIBLE, rect.right - BOX_X_OFFSET - 50, rect.bottom - 119, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
+	HWND paintLayersLable = CreateWindow(L"STATIC", L" Paint terrain layers ", WS_CHILD | WS_VISIBLE, rect.right - BOX_X_OFFSET - 50, rect.bottom - 139, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND sizeLable = CreateWindow(L"STATIC", L" World size: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 1 - 0, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND multLable = CreateWindow(L"STATIC", L" Multiplier: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 2 - 1, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
 	HWND displayLable = CreateWindow(L"STATIC", L" Polygon display: ", WS_CHILD | WS_VISIBLE, rect.left + LABEL_X_OFFSET, rect.top + LABEL_Y_OFFSET * 3 - 2, LABEL_WIDTH, 20, hParent, (HMENU)STATIC_LABEL, hInstance, NULL);
@@ -1008,6 +1025,25 @@ LRESULT Program::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 							polygonType = GL_TRIANGLES;
 						}
+					}
+
+					break;
+				}
+
+				case PAINT_LAYERS_CHECKBOX:
+				{
+					if (HIWORD(wParam) == BN_CLICKED)
+					{
+						if (SendDlgItemMessage(hWnd, PAINT_LAYERS_CHECKBOX, BM_GETCHECK, 0, 0))
+						{
+							paintTerrainLayers = true;
+						}
+						else
+						{
+							paintTerrainLayers = false;
+						}
+
+						noiseShouldChange = true;
 					}
 
 					break;

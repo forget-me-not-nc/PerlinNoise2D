@@ -27,6 +27,7 @@
 #define PERSISTENCE_INPUT 1012
 #define LACUNARITY_INPUT 1013
 #define ANIMATION_CHECKBOX 1014
+#define PAINT_LAYERS_CHECKBOX 1015
 
 ///////////////////////////////////
 //

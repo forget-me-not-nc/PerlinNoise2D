@@ -1,5 +1,4 @@
 #include "Noise.h"
-#include <queue>
 
 ///////////////////////////////////
 //
@@ -8,7 +7,6 @@
 
 Noise::Noise(unsigned int seed, int multiplier, WORLD_SIZE size, float harshness)
 {
-	this->vertexColor = glm::vec3(0.0f, 0.67843f, 0.70980f);
 	this->engine = std::default_random_engine(seed);
 
 	srand(seed);
@@ -91,6 +89,13 @@ void Noise::setAnimation(bool animation)
 
 ///////////////////////////////////
 
+void Noise::setPaintTerrainLayers(bool paint)
+{
+	this->paintTerrainLayers = paint;
+}
+
+///////////////////////////////////
+
 std::vector<Vertex> Noise::triangulateMesh()
 {
 	std::vector<Vertex> v;
@@ -120,17 +125,27 @@ std::vector<Vertex> Noise::triangulateMesh()
 			nextV = data[rightUpIndex];
 			diagV = data[rightDownIndex];
 
-			v[indexStep + 0] = Vertex(currV, vertexColor, glm::normalize(glm::cross(nextV - currV, diagV - currV)));
-			v[indexStep + 1] = Vertex(nextV, vertexColor, glm::normalize(glm::cross(diagV - nextV, currV - nextV)));
-			v[indexStep + 2] = Vertex(diagV, vertexColor, glm::normalize(glm::cross(currV - diagV, nextV - diagV)));
+			v[indexStep + 0] = Vertex(currV, DEFAULT_V_COLOR, glm::normalize(glm::cross(nextV - currV, diagV - currV)));
+			v[indexStep + 1] = Vertex(nextV, DEFAULT_V_COLOR, glm::normalize(glm::cross(diagV - nextV, currV - nextV)));
+			v[indexStep + 2] = Vertex(diagV, DEFAULT_V_COLOR, glm::normalize(glm::cross(currV - diagV, nextV - diagV)));
 
 			currV = data[rightDownIndex];
 			nextV = data[leftDownIndex];
 			diagV = data[leftUpIndex];
 
-			v[indexStep + 3] = Vertex(currV, vertexColor, glm::normalize(glm::cross(nextV - currV, diagV - currV)));
-			v[indexStep + 4] = Vertex(nextV, vertexColor, glm::normalize(glm::cross(diagV - nextV, currV - nextV)));
-			v[indexStep + 5] = Vertex(diagV, vertexColor, glm::normalize(glm::cross(currV - diagV, nextV - diagV)));
+			v[indexStep + 3] = Vertex(currV, DEFAULT_V_COLOR, glm::normalize(glm::cross(nextV - currV, diagV - currV)));
+			v[indexStep + 4] = Vertex(nextV, DEFAULT_V_COLOR, glm::normalize(glm::cross(diagV - nextV, currV - nextV)));
+			v[indexStep + 5] = Vertex(diagV, DEFAULT_V_COLOR, glm::normalize(glm::cross(currV - diagV, nextV - diagV)));
+
+			if (this->paintTerrainLayers)
+			{
+				assignColorBasedOnLayer(v[indexStep + 0]);
+				assignColorBasedOnLayer(v[indexStep + 1]);
+				assignColorBasedOnLayer(v[indexStep + 2]);
+				assignColorBasedOnLayer(v[indexStep + 3]);
+				assignColorBasedOnLayer(v[indexStep + 4]);
+				assignColorBasedOnLayer(v[indexStep + 5]);
+			}
 
 			indexStep += 6;
 		}
@@ -161,14 +176,39 @@ std::vector<Vertex> Noise::arrangeMeshAsQuads()
 
 			glm::vec3 normal = glm::normalize(glm::cross(nextV - currV, diagV - currV));
 
-			v[index++] = Vertex(currV, vertexColor, normal);
-			v[index++] = Vertex(nextV, vertexColor, normal);
-			v[index++] = Vertex(diagV, vertexColor, normal);
-			v[index++] = Vertex(prevV, vertexColor, normal);
+			v[index++] = Vertex(currV, DEFAULT_V_COLOR, normal);
+			if (paintTerrainLayers) assignColorBasedOnLayer(v[index - 1]);
+
+			v[index++] = Vertex(nextV, DEFAULT_V_COLOR, normal);
+			if (paintTerrainLayers) assignColorBasedOnLayer(v[index - 1]);
+
+			v[index++] = Vertex(diagV, DEFAULT_V_COLOR, normal);
+			if (paintTerrainLayers) assignColorBasedOnLayer(v[index - 1]);
+
+			v[index++] = Vertex(prevV, DEFAULT_V_COLOR, normal);
+			if (paintTerrainLayers) assignColorBasedOnLayer(v[index - 1]);
 		}
 	}
 
 	return v;
+}
+
+///////////////////////////////////
+
+void Noise::assignColorBasedOnLayer(Vertex& v)
+{
+	if (v.pos.y <= SEE_LAYER)
+	{
+		v.color = seeLayer.color;
+	}
+	else if (v.pos.y > SEE_LAYER && v.pos.y <= PLANES_LAYER)
+	{
+		v.color = planeLayer.color;
+	}
+	else if (v.pos.y > PLANES_LAYER)
+	{
+		v.color = hillsLayer.color;
+	}
 }
 
 ///////////////////////////////////

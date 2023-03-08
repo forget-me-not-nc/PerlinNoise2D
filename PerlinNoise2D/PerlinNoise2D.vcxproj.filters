@@ -83,6 +83,9 @@
     <ClInclude Include="PerlinNoiseOctaves.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="Layers.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="vertShader.glsl">

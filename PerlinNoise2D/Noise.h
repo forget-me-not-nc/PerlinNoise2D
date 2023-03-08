@@ -5,6 +5,7 @@
 #include <gtc/noise.hpp>
 
 #include "Vertex.h"
+#include "Layers.h"
 
 ///////////////////////////////////
 //
@@ -24,6 +25,8 @@ enum class NOISE_TYPE
 	PERLIN,
 	PERLIN_OCTAVES
 };
+
+const glm::vec3	DEFAULT_V_COLOR = glm::vec3(0.0f, 0.67843f, 0.70980f);
 
 ///////////////////////////////////
 //
@@ -50,6 +53,7 @@ public:
 	virtual glm::vec3 getLightPos();
 
 	void setAnimation(bool animation);
+	void setPaintTerrainLayers(bool paint);
 
 	///////////////////////////////////
 	//
@@ -69,7 +73,6 @@ protected:
 	//////////////////////////////////
 
 	glm::vec3* data;
-	glm::vec3 vertexColor;
 	glm::vec3 lightPos;
 
 	///////////////////////////////////
@@ -81,6 +84,7 @@ protected:
 	float harshness;
 
 	bool animated;
+	bool paintTerrainLayers;
 
 	std::default_random_engine engine;
 
@@ -97,6 +101,8 @@ private:
 
 	std::vector<Vertex> triangulateMesh();
 	std::vector<Vertex> arrangeMeshAsQuads();
+	
+	void assignColorBasedOnLayer(Vertex& v);
 };
 
 ///////////////////////////////////

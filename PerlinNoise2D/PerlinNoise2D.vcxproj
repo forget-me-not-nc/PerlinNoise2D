@@ -162,6 +162,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Includes.h" />
+    <ClInclude Include="Layers.h" />
     <ClInclude Include="MathFunctions.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Noise.h" />
